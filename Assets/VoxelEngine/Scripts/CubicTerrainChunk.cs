@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections;
 using System.Threading;
+using System.Linq;
 
 /// <summary>
 /// Cubic terrain chunk.
@@ -97,16 +98,16 @@ public class CubicTerrainChunk : MonoBehaviour
 	{
 		public Vector3[] vertices;
 		public int[] triangles;
-		public Color[] colors;
+		// public Color[] colors;
 		public Vector2[] uvs;
-		public Dictionary<int, TriangleBlockInfo> triangleLookupTable;
 	}
 
 	// Triangle info.
 	// Will identify triangle indices with
-	class TriangleBlockInfo
+	public class TriangleBlockInfo
 	{
 		public int x, y, z;
+		public BlockFace face;
 
 		public TriangleBlockInfo(int x, int y, int z)
 		{
@@ -130,7 +131,7 @@ public class CubicTerrainChunk : MonoBehaviour
 	public CubicTerrain master;
 
 	/// <summary>
-	/// The frame where an update occured
+	/// The frame where an update occured	
 	/// </summary>
 	private static float lastUpdateFrame;
 
@@ -146,7 +147,7 @@ public class CubicTerrainChunk : MonoBehaviour
 
 	public bool isDirty
 	{
-		get { return this._isDirty || (this.chunkData == null || this.chunkData.isDirty); }
+		get { return (this._isDirty || (this.chunkData != null && this.chunkData.isDirty)); }
 		set { this._isDirty = value; if (this.chunkData != null) { this.chunkData.isDirty = value; } }
 	}
 
@@ -158,15 +159,15 @@ public class CubicTerrainChunk : MonoBehaviour
 	/// <summary>
 	/// The renderer.
 	/// </summary>
-	private MeshRenderer renderer;
-	private MeshFilter filter;
-	private MeshCollider meshCollider;
+	private Mesh[] meshes;
+
+	public Vector3 chunkPosition;
 
 	/// <summary>
 	/// The new mesh.
 	/// Generated from another thread. asnychronously!
 	/// </summary>
-	private MeshData newMeshData;
+	private MeshData[] newMeshData;
 
 	private object meshDataLockObject = new object();
 
@@ -176,10 +177,7 @@ public class CubicTerrainChunk : MonoBehaviour
 
 	public void Start()
 	{
-		this.filter = this.gameObject.AddComponent<MeshFilter> ();
-		this.renderer = this.gameObject.AddComponent<MeshRenderer> ();
-		this.meshCollider = this.gameObject.AddComponent<MeshCollider> ();
-		this.renderer.sharedMaterial = this.terrainMaterial;
+
 	}
 
 	/// <summary>
@@ -191,39 +189,93 @@ public class CubicTerrainChunk : MonoBehaviour
 		{
 			this.meshGenerationThread = new Thread(this.GenerateMesh);
 			this.meshGenerationThread.Start ();
-
+			
 			this.isDirty = false;
 		}
-
-		if (lastUpdateFrame < Time.frameCount - 5)
+		
+		// Lag protection
+        if (lastUpdateFrame < Time.frameCount - 5)
 		{
-			// Lag protection
 			lock (this.meshDataLockObject)
 			{
 				if (this.newMeshData != null)
 				{
-					// Generate new mesh object from raw data.
-					Mesh newMesh = new Mesh();
-					newMesh.vertices = this.newMeshData.vertices;
-					newMesh.colors = this.newMeshData.colors;
-					newMesh.uv = this.newMeshData.uvs;
-					newMesh.triangles = this.newMeshData.triangles;
-					newMesh.RecalculateBounds ();
-					newMesh.RecalculateNormals ();
-					newMesh.Optimize();
+					GameObject[] existingObjects = new GameObject[this.transform.childCount];
+					int j = 0;
 
-					// Set lookup table
-					this.triangleLookupTable = this.newMeshData.triangleLookupTable;
+					// Reuse childs
+					foreach (Transform t in this.transform)
+					{
+						// Destroy (t.gameObject);
+						existingObjects[j]=t.gameObject;
+						j++;
+					}
 
-					// Set new mesh to the filter
-					this.filter.mesh = newMesh;
-					this.meshCollider.sharedMesh = newMesh;
+					for (int i = 0; i < this.newMeshData.Length; i++)
+					{
+						MeshData meshData = this.newMeshData[i];
+						// Generate new mesh object from raw data.
+						Mesh newMesh = new Mesh();
 
-					// Cleanup
+						newMesh.vertices = meshData.vertices; // this.newMeshData.vertices;
+						// newMesh.colors = this.newMeshData.colors;
+						newMesh.uv = meshData.uvs; // this.newMeshData.uvs;
+						newMesh.triangles = meshData.triangles; // this.newMeshData.triangles;
+						newMesh.RecalculateBounds ();
+						newMesh.RecalculateNormals ();
+						newMesh.Optimize();
+
+						GameObject meshObject = null;
+						bool newObject = false;
+
+						// Add new mesh object if there is none
+						if (existingObjects.Length > i)
+						{
+							meshObject=existingObjects[i];
+							existingObjects[i]=null;
+						}
+						else
+						{
+							meshObject = new GameObject();
+							meshObject.transform.parent = this.transform;
+							meshObject.transform.position=this.transform.position;
+							meshObject.layer=this.gameObject.layer;
+							meshObject.transform.name="Mesh_"+i;
+							newObject=true;
+						}
+
+						MeshFilter filter = null;
+						MeshRenderer renderer = null;
+						MeshCollider collider = null;
+
+						if (newObject)
+						{
+							filter = meshObject.AddComponent<MeshFilter>();
+							renderer = meshObject.AddComponent<MeshRenderer>();
+							collider = meshObject.AddComponent<MeshCollider>();
+						}
+						else
+						{
+							filter = meshObject.GetComponent<MeshFilter>();
+							renderer = meshObject.GetComponent<MeshRenderer>();
+							collider = meshObject.GetComponent<MeshCollider>();
+						}
+
+						filter.sharedMesh = newMesh;
+						collider.sharedMesh = newMesh;
+						renderer.material = this.terrainMaterial;
+                    }
+                    
+                    // Cleanup
+					foreach (GameObject g in existingObjects)
+					{
+						if (g != null)
+							Destroy (g);
+					}
 					this.newMeshData = null;
 					this.meshGenerationThread.Abort();
 					this.meshGenerationThread = null;
-
+					
 					lastUpdateFrame = Time.frameCount;
 				}
 			}
@@ -240,6 +292,16 @@ public class CubicTerrainChunk : MonoBehaviour
 	{
 		TriangleBlockInfo blockInfo = this.triangleLookupTable [triangleIndex*3];
 		return new Vector3 (blockInfo.x, blockInfo.y, blockInfo.z);
+	}
+
+	/// <summary>
+	/// Returns the block info for the given triangleindex hit.
+	/// </summary>
+	/// <returns>The index info.</returns>
+	/// <param name="triangleIndex">Triangle index.</param>
+	public TriangleBlockInfo triangleIndexInfo(int triangleIndex)
+	{
+		return this.triangleLookupTable [triangleIndex * 3];
 	}
 
 	/// <summary>
@@ -273,42 +335,42 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (x == 0 || (voxelData[x-1][y][z] == null || voxelData[x-1][y][z].blockId < 0))
 					{
 						// Un-Covered! Add mesh data!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, leftSideVertices, leftSideIndices, indicesCounter,x,y,z, Color.blue, Blocks.GetBlock(voxelData[x][y][z].blockId).leftUv);
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, leftSideVertices, leftSideIndices, indicesCounter,x,y,z, Color.blue, Blocks.GetBlock(voxelData[x][y][z].blockId).leftUv, BlockFace.LEFT);
 						indicesCounter += leftSideVertices.Length;
 					}
 					// Right side un-covered?
 					if (x == this._chunkData.width -1 || ((voxelData[x+1][y][z] == null || voxelData[x+1][y][z].blockId < 0)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, rightSideVertices, rightSideIndices, indicesCounter,x,y,z, Color.black, Blocks.GetBlock(voxelData[x][y][z].blockId).rightUv);
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, rightSideVertices, rightSideIndices, indicesCounter,x,y,z, Color.black, Blocks.GetBlock(voxelData[x][y][z].blockId).rightUv, BlockFace.RIGHT);
 						indicesCounter += rightSideVertices.Length;
 					}
 					// Top side un-covered?
 					if (y == this._chunkData.height-1 || ((voxelData[x][y+1][z] == null || voxelData[x][y+1][z].blockId < 0)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, topSideVertices, topSideIndices, indicesCounter,x,y,z, Color.gray, Blocks.GetBlock(voxelData[x][y][z].blockId).topUv); // Blocks.GetBlock(voxelData[x][y][z].blockId).topUv);
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, topSideVertices, topSideIndices, indicesCounter,x,y,z, Color.gray, Blocks.GetBlock(voxelData[x][y][z].blockId).topUv, BlockFace.TOP); // Blocks.GetBlock(voxelData[x][y][z].blockId).topUv);
 						indicesCounter += topSideVertices.Length;
 					}
 					// Bottom side un-covered?
 					if (y == 0 || (voxelData[x][y-1][z] == null || voxelData[x][y-1][z].blockId < 0))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, bottomSideVertices, bottomSideIndices, indicesCounter,x,y,z, Color.green, Blocks.GetBlock(voxelData[x][y][z].blockId).bottomUv);
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, bottomSideVertices, bottomSideIndices, indicesCounter,x,y,z, Color.green, Blocks.GetBlock(voxelData[x][y][z].blockId).bottomUv, BlockFace.BOTTOM);
 						indicesCounter += bottomSideVertices.Length;
 					}
 					// Back side un-covered?
 					if (z == 0 || (voxelData[x][y][z-1] == null || voxelData[x][y][z-1].blockId < 0))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, backSideVertices, backSideIndices, indicesCounter,x,y,z, Color.yellow, Blocks.GetBlock(voxelData[x][y][z].blockId).backUv);
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, backSideVertices, backSideIndices, indicesCounter,x,y,z, Color.yellow, Blocks.GetBlock(voxelData[x][y][z].blockId).backUv, BlockFace.BACK);
 						indicesCounter += backSideVertices.Length;
                     }
                     // Front side un-covered?
 					if (z == this._chunkData.depth-1 || ((voxelData[x][y][z+1] == null || voxelData[x][y][z+1].blockId < 0)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, frontSideVertices, frontSideIndices, indicesCounter,x,y,z, Color.red, Blocks.GetBlock(voxelData[x][y][z].blockId).frontUv);
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, frontSideVertices, frontSideIndices, indicesCounter,x,y,z, Color.red, Blocks.GetBlock(voxelData[x][y][z].blockId).frontUv, BlockFace.FRONT);
 						indicesCounter += frontSideVertices.Length;
 					}
 				}
@@ -318,12 +380,42 @@ public class CubicTerrainChunk : MonoBehaviour
 		// Set mesh data
 		lock (this.meshDataLockObject)
 		{
-			this.newMeshData = new MeshData ();
-			this.newMeshData.vertices = vertices.ToArray ();
-			this.newMeshData.triangles = indices.ToArray ();
-			this.newMeshData.uvs = uvs.ToArray ();
-			this.newMeshData.colors = colors.ToArray ();
-			this.newMeshData.triangleLookupTable = triangleLookupTable;
+			int verticeCount = vertices.Count;
+			int verticesAlreadySelected = 0;
+			int trianglesAlreadySelected = 0;
+			List<MeshData> meshDataList = new List<MeshData>();
+			while (verticeCount > 0)
+			{
+				MeshData meshData = new MeshData();
+				// Get vertices
+				int verticesToSelect = Mathf.Min (verticeCount, 65000);
+				verticesToSelect = verticesToSelect - (verticesToSelect % 4);
+				int trianglesToSelect = (verticesToSelect / 4) * 6;
+				
+				Vector3[] selectedVertices = vertices.Skip(verticesAlreadySelected).Take(verticesToSelect).ToArray();
+				Vector2[] selectedUvs = uvs.Skip(verticesAlreadySelected).Take(verticesToSelect).ToArray();
+				int[] selectedTriangles = indices.Skip(trianglesAlreadySelected).Take(trianglesToSelect).ToArray();
+				
+				
+				// Preprocess indices
+				for(int i = 0; i < selectedTriangles.Length; i++)
+				{
+					selectedTriangles[i]=selectedTriangles[i]-verticesAlreadySelected;
+				}
+				
+				trianglesAlreadySelected+=trianglesToSelect;
+				verticesAlreadySelected+=verticesToSelect;
+
+				meshData.vertices = selectedVertices;
+				meshData.triangles = selectedTriangles;
+				meshData.uvs = selectedUvs;
+
+				// this.newMeshData.colors = colors.ToArray ();
+				meshDataList.Add(meshData);
+				verticeCount-=verticesToSelect;
+			}
+			this.newMeshData = meshDataList.ToArray ();
+			this.triangleLookupTable = triangleLookupTable;
 		}
 	}
 
@@ -334,12 +426,13 @@ public class CubicTerrainChunk : MonoBehaviour
 	/// <param name="sideVertices">Side vertices.</param>
 	/// <param name="sideIndices">Side indices.</param>
 	/// <param name="indiceCounter">Indice counter.</param>
-	private static void WriteSideData(List<Vector3> vertices, List<int> indices, List<Vector2> uvs, List<Color> colors, Dictionary<int, TriangleBlockInfo> triangleLookupTable, Vector3[] sideVertices, int[] sideIndices, int indicesCounter, int x, int y, int z, Color color, Vector2[] uv)
+	private static void WriteSideData(List<Vector3> vertices, List<int> indices, List<Vector2> uvs, List<Color> colors, Dictionary<int, TriangleBlockInfo> triangleLookupTable, Vector3[] sideVertices, int[] sideIndices, int indicesCounter, int x, int y, int z, Color color, Vector2[] uv, BlockFace face)
 	{
 		// 4 vertices per face, so divide indicesCounter which is the current vertex by 4.
 		int faceCount = indicesCounter / 4;
 
 		TriangleBlockInfo blockInfo = new TriangleBlockInfo (x, y, z);
+		blockInfo.face = face;
 
 		// Add indices to the update list
 		triangleLookupTable.Add((faceCount*6), blockInfo);

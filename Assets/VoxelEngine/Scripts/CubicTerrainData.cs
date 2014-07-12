@@ -111,4 +111,30 @@ public class CubicTerrainData
 		this._voxelData [x] [y] [z] = new VoxelData (blockId);
 		this._isDirty = true;
 	}
+
+	/// <summary>
+	/// Gets the voxel data for the given coordinates.
+	/// Returns null or voxeldata with blockid less than 0 for empty space.
+	/// </summary>
+	/// <returns>The voxel.</returns>
+	/// <param name="x">The x coordinate.</param>
+	/// <param name="y">The y coordinate.</param>
+	/// <param name="z">The z coordinate.</param>
+	public VoxelData GetVoxel (int x, int y, int z)
+	{
+		return this.voxelData[x][y][z];
+	}
+
+
+	/// <summary>
+	/// Determines whether this instance has voxel at the specified x y z.
+	/// </summary>
+	/// <returns><c>true</c> if this instance has voxel at the specified x y z; otherwise, <c>false</c>.</returns>
+	/// <param name="x">The x coordinate.</param>
+	/// <param name="y">The y coordinate.</param>
+	/// <param name="z">The z coordinate.</param>
+	public bool HasVoxel(int x, int y, int z)
+	{
+		return this.voxelData [x] [y] [z] != null && this.voxelData [x] [y] [z].blockId >= 0;
+	}
 }

@@ -214,6 +214,7 @@ public class CubicTerrain : MonoBehaviour
 		this.chunkObjects.Add (new ChunkTuple (x, z), chunkObject);
 		CubicTerrainChunk terrainChunk = chunkObject.AddComponent<CubicTerrainChunk> ();
 		terrainChunk.terrainMaterial = this.terrainMaterial;
+		terrainChunk.chunkPosition = new Vector3 (x, 0, z);
 
 		lock (this.generationLockObject)
 		{
@@ -300,5 +301,16 @@ public class CubicTerrain : MonoBehaviour
 			Destroy (this.chunkObjects[t]);
 			this.chunkObjects.Remove (t);
 		}
+	}
+
+	/// <summary>
+	/// Gets the chunk object for the given chunk positions.
+	/// </summary>
+	/// <returns>The chunk object.</returns>
+	/// <param name="chunkX">Chunk x.</param>
+	/// <param name="chunkZ">Chunk z.</param>
+	public GameObject GetChunkObject(int chunkX, int chunkZ)
+	{
+		return this.chunkObjects [new ChunkTuple (chunkX, chunkZ)];
 	}
 }

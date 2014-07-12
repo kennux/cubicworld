@@ -31,17 +31,24 @@ public class BlockRemoval : MonoBehaviour
 			// Perform the raycast
 			if (Physics.Raycast(cameraRay, out hitInfo, 50, this.detectionMask.value))
 			{
-				// Chunk hit?
-				CubicTerrainChunk chunk = hitInfo.collider.GetComponent<CubicTerrainChunk>();
-				if (chunk != null)
-				{
-					// Yes, chunk hit!
-					// Delete the clicked block
-					Debug.Log ("Triangle clicked: " + hitInfo.triangleIndex);
-					Vector3 block = chunk.triangleIndexToBlock(hitInfo.triangleIndex);
-					Debug.Log ("Block clicked: " + block);
+				if (hitInfo.collider == null)
+					return;
 
-					chunk.chunkData.SetVoxel((int)block.x, (int) block.y, (int) block.z, -1);
+				// get collider parent
+				Transform chunkTransform = hitInfo.collider.transform.parent;
+
+				if (chunkTransform != null)
+				{
+					// Chunk hit?
+					CubicTerrainChunk chunk = chunkTransform.GetComponent<CubicTerrainChunk>();
+					if (chunk != null && !chunk.isDirty)
+					{
+						// Yes, chunk hit!
+						// Delete the clicked block
+						Vector3 block = chunk.triangleIndexToBlock(hitInfo.triangleIndex);
+
+						chunk.chunkData.SetVoxel((int)block.x, (int) block.y, (int) block.z, -1);
+					}
 				}
 			}
 		}
