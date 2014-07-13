@@ -194,7 +194,7 @@ public class CubicTerrainChunk : MonoBehaviour
 		}
 		
 		// Lag protection
-        if (lastUpdateFrame < Time.frameCount - 5)
+        if (this.master != null && (!this.master.smoothChunkLoading || lastUpdateFrame < Time.frameCount - 5))
 		{
 			lock (this.meshDataLockObject)
 			{
@@ -315,6 +315,7 @@ public class CubicTerrainChunk : MonoBehaviour
 		
 		List<Vector3> vertices = new List<Vector3> ();
 		List<int> indices = new List<int> ();
+		List<int> lastIndices = new List<int> ();
 		List<Vector2> uvs = new List<Vector2> ();
 		List<Color> colors = new List<Color> ();
 
@@ -332,45 +333,45 @@ public class CubicTerrainChunk : MonoBehaviour
 						continue;
 
 					// Left side un-covered?
-					if (x == 0 || (voxelData[x-1][y][z] == null || voxelData[x-1][y][z].blockId < 0))
-					{
-						// Un-Covered! Add mesh data!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, leftSideVertices, leftSideIndices, indicesCounter,x,y,z, Color.blue, Blocks.GetBlock(voxelData[x][y][z].blockId).leftUv, BlockFace.LEFT);
+					if (x == 0 || (voxelData[x-1][y][z] == null || voxelData[x-1][y][z].blockId < 0 || voxelData[x-1][y][z].transparent))
+                    {
+                        // Un-Covered! Add mesh data!
+						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, leftSideVertices, leftSideIndices, indicesCounter,x,y,z, Color.blue, Blocks.GetBlock(voxelData[x][y][z].blockId).leftUv, BlockFace.LEFT, voxelData[x][y][z].transparent);
 						indicesCounter += leftSideVertices.Length;
 					}
 					// Right side un-covered?
-					if (x == this._chunkData.width -1 || ((voxelData[x+1][y][z] == null || voxelData[x+1][y][z].blockId < 0)))
+					if (x == this._chunkData.width -1 || ((voxelData[x+1][y][z] == null || voxelData[x+1][y][z].blockId < 0 || voxelData[x+1][y][z].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, rightSideVertices, rightSideIndices, indicesCounter,x,y,z, Color.black, Blocks.GetBlock(voxelData[x][y][z].blockId).rightUv, BlockFace.RIGHT);
+						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, rightSideVertices, rightSideIndices, indicesCounter,x,y,z, Color.black, Blocks.GetBlock(voxelData[x][y][z].blockId).rightUv, BlockFace.RIGHT, voxelData[x][y][z].transparent);
 						indicesCounter += rightSideVertices.Length;
 					}
 					// Top side un-covered?
-					if (y == this._chunkData.height-1 || ((voxelData[x][y+1][z] == null || voxelData[x][y+1][z].blockId < 0)))
+					if (y == this._chunkData.height-1 || ((voxelData[x][y+1][z] == null || voxelData[x][y+1][z].blockId < 0 || voxelData[x][y+1][z].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, topSideVertices, topSideIndices, indicesCounter,x,y,z, Color.gray, Blocks.GetBlock(voxelData[x][y][z].blockId).topUv, BlockFace.TOP); // Blocks.GetBlock(voxelData[x][y][z].blockId).topUv);
+						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, topSideVertices, topSideIndices, indicesCounter,x,y,z, Color.gray, Blocks.GetBlock(voxelData[x][y][z].blockId).topUv, BlockFace.TOP, voxelData[x][y][z].transparent); // Blocks.GetBlock(voxelData[x][y][z].blockId).topUv);
 						indicesCounter += topSideVertices.Length;
 					}
 					// Bottom side un-covered?
-					if (y == 0 || (voxelData[x][y-1][z] == null || voxelData[x][y-1][z].blockId < 0))
+					if (y == 0 || (voxelData[x][y-1][z] == null || voxelData[x][y-1][z].blockId < 0 || voxelData[x][y-1][z].transparent))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, bottomSideVertices, bottomSideIndices, indicesCounter,x,y,z, Color.green, Blocks.GetBlock(voxelData[x][y][z].blockId).bottomUv, BlockFace.BOTTOM);
+						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, bottomSideVertices, bottomSideIndices, indicesCounter,x,y,z, Color.green, Blocks.GetBlock(voxelData[x][y][z].blockId).bottomUv, BlockFace.BOTTOM, voxelData[x][y][z].transparent);
 						indicesCounter += bottomSideVertices.Length;
 					}
 					// Back side un-covered?
-					if (z == 0 || (voxelData[x][y][z-1] == null || voxelData[x][y][z-1].blockId < 0))
+					if (z == 0 || (voxelData[x][y][z-1] == null || voxelData[x][y][z-1].blockId < 0 || voxelData[x][y][z-1].transparent))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, backSideVertices, backSideIndices, indicesCounter,x,y,z, Color.yellow, Blocks.GetBlock(voxelData[x][y][z].blockId).backUv, BlockFace.BACK);
+						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, backSideVertices, backSideIndices, indicesCounter,x,y,z, Color.yellow, Blocks.GetBlock(voxelData[x][y][z].blockId).backUv, BlockFace.BACK, voxelData[x][y][z].transparent);
 						indicesCounter += backSideVertices.Length;
                     }
                     // Front side un-covered?
-					if (z == this._chunkData.depth-1 || ((voxelData[x][y][z+1] == null || voxelData[x][y][z+1].blockId < 0)))
+					if (z == this._chunkData.depth-1 || ((voxelData[x][y][z+1] == null || voxelData[x][y][z+1].blockId < 0 || voxelData[x][y][z+1].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, frontSideVertices, frontSideIndices, indicesCounter,x,y,z, Color.red, Blocks.GetBlock(voxelData[x][y][z].blockId).frontUv, BlockFace.FRONT);
+						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, frontSideVertices, frontSideIndices, indicesCounter,x,y,z, Color.red, Blocks.GetBlock(voxelData[x][y][z].blockId).frontUv, BlockFace.FRONT, voxelData[x][y][z].transparent);
 						indicesCounter += frontSideVertices.Length;
 					}
 				}
@@ -380,6 +381,7 @@ public class CubicTerrainChunk : MonoBehaviour
 		// Set mesh data
 		lock (this.meshDataLockObject)
 		{
+			indices.AddRange(lastIndices);
 			int verticeCount = vertices.Count;
 			int verticesAlreadySelected = 0;
 			int trianglesAlreadySelected = 0;
@@ -420,13 +422,25 @@ public class CubicTerrainChunk : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Writes the side data to the given mesh.
+	/// Writes the side data.
 	/// </summary>
-	/// <param name="mesh">Mesh.</param>
+	/// <param name="vertices">Vertices.</param>
+	/// <param name="indices">Indices.</param>
+	/// <param name="lastIndices">Last indices.</param>
+	/// <param name="uvs">Uvs.</param>
+	/// <param name="colors">Colors.</param>
+	/// <param name="triangleLookupTable">Triangle lookup table.</param>
 	/// <param name="sideVertices">Side vertices.</param>
 	/// <param name="sideIndices">Side indices.</param>
-	/// <param name="indiceCounter">Indice counter.</param>
-	private static void WriteSideData(List<Vector3> vertices, List<int> indices, List<Vector2> uvs, List<Color> colors, Dictionary<int, TriangleBlockInfo> triangleLookupTable, Vector3[] sideVertices, int[] sideIndices, int indicesCounter, int x, int y, int z, Color color, Vector2[] uv, BlockFace face)
+	/// <param name="indicesCounter">Indices counter.</param>
+	/// <param name="x">The x coordinate.</param>
+	/// <param name="y">The y coordinate.</param>
+	/// <param name="z">The z coordinate.</param>
+	/// <param name="color">Color.</param>
+	/// <param name="uv">Uv.</param>
+	/// <param name="face">Face.</param>
+	/// <param name="transparent">If set to <c>true</c> transparent.</param>
+	private static void WriteSideData(List<Vector3> vertices, List<int> indices, List<int> lastIndices, List<Vector2> uvs, List<Color> colors, Dictionary<int, TriangleBlockInfo> triangleLookupTable, Vector3[] sideVertices, int[] sideIndices, int indicesCounter, int x, int y, int z, Color color, Vector2[] uv, BlockFace face, bool transparent)
 	{
 		// 4 vertices per face, so divide indicesCounter which is the current vertex by 4.
 		int faceCount = indicesCounter / 4;
@@ -462,7 +476,13 @@ public class CubicTerrainChunk : MonoBehaviour
 
 		// Add mesh data to the lists.
 		vertices.AddRange (absoluteVertices);
-		indices.AddRange (absoluteIndices);
+
+		// Write indices
+		if (transparent)
+			lastIndices.AddRange (absoluteIndices);
+		else
+			indices.AddRange (absoluteIndices);
+
 		uvs.AddRange (uv);
 	}
 }

@@ -7,6 +7,10 @@ public class CubicTerrainData
 	public class VoxelData
 	{
 		public short blockId;
+		public bool transparent
+		{
+			get { return Blocks.GetBlock (this.blockId).transparentBlock; }
+		}
 
 		public VoxelData(short blockId)
 		{

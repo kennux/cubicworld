@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 /// <summary>
 /// Blocks "holder".
@@ -61,35 +62,20 @@ public class Blocks
 	}
 
 	/// <summary>
+	/// Gets the texture by identifier.
+	/// </summary>
+	/// <returns>The texture by identifier.</returns>
+	/// <param name="textureId">Texture identifier.</param>
+	public static Texture2D GetTextureById(int textureId)
+	{
+		return textures [textureId];
+	}
+
+	/// <summary>
 	/// Builds the texture atlas.
 	/// </summary>
 	public static void BuildTextureAtlas()
 	{
-		/*textureAtlas = new Texture2D (4096, 4096);
-		int currentX = 0;
-		int currentY = 0;
-		int maxX = (4096 / (int)textureDimension.x)-1;
-		int maxY = (4096 / (int)textureDimension.y)-1;
-
-		foreach (KeyValuePair<int, Texture2D> texture in textures)
-		{
-			if (currentX == maxX)
-			{
-				currentY++;
-				currentX=0;
-			}
-
-			if (currentY == maxY)
-			{
-				Debug.LogError ("Could not add texture to texture atlas! no free space!");
-				return;
-			}
-
-			// Add texture to atlas
-			// bottomleft to topright
-			textureAtlas.SetPixels(currentX*(int)textureDimension.x, currentY*(int)textureDimension.y, (int)textureDimension.x, (int)textureDimension.y, texture.Value.GetPixels());
-		}*/
-
 		// Build texture array
 		Texture2D[] atlasTextures = new Texture2D[textures.Count];
 		foreach (KeyValuePair<int, Texture2D> texture in textures)
@@ -98,17 +84,26 @@ public class Blocks
 		}
 
 		// Build atlas
-		textureAtlas = new Texture2D (4096, 4096);
+		textureAtlas = new Texture2D (4096, 4096, TextureFormat.RGBA32, false);
 		Rect[] uvRects = textureAtlas.PackTextures (atlasTextures, 0);
 
 		// Set texture atlas properties
 		textureAtlas.anisoLevel = 9;
-		textureAtlas.filterMode = FilterMode.Trilinear;
+		textureAtlas.filterMode = FilterMode.Point;
+		textureAtlas.wrapMode = TextureWrapMode.Clamp;
+		textureAtlas.Apply ();
+
+		float uvPixelRatio = 1 / textureAtlas.width;
 
 		// Save uvs
 		textureCoordinates = new Dictionary<int, Vector2[]> ();
 		foreach (KeyValuePair<int, Texture2D> texture in textures)
 		{
+			// Prevent other textures mixing in
+			uvRects[texture.Key].x+=uvPixelRatio*2;
+			uvRects[texture.Key].y+=uvPixelRatio*2;
+			uvRects[texture.Key].width-=uvPixelRatio*4;
+			uvRects[texture.Key].height-=uvPixelRatio*4;
 			textureCoordinates.Add (texture.Key,new Vector2[]
 			{
 				new Vector2(uvRects[texture.Key].x, uvRects[texture.Key].y),
@@ -129,22 +124,6 @@ public class Blocks
 	/// </summary>
 	public static Vector2[] GetUvForTexture(int textureId)
 	{
-        /*int maxX = (4096 / (int)textureDimension.x)-1;
-		int maxY = (4096 / (int)textureDimension.y)-1;
-
-		float blockX = (blockId % maxX) / maxX;
-		float blockY = Mathf.Floor ((blockId / maxX)) / maxY;
-		
-		float sizeX = textureDimension.x / 4096;
-		float sizeY = textureDimension.y / 4096;
-
-		return new Vector2[]
-		{
-			new Vector2(blockX, blockY),
-			new Vector2(blockX+sizeX, blockY),
-			new Vector2(blockX, blockY+sizeY),
-			new Vector2(blockX+sizeX, blockY+sizeY)
-		};*/
 		return textureCoordinates[textureId];
 	}
 

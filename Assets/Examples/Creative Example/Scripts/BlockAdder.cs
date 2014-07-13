@@ -11,6 +11,8 @@ public class BlockAdder : MonoBehaviour
 	/// The detection mask.
 	/// </summary>
 	public LayerMask detectionMask;
+
+	public int blockId = 1;
 	
 	public void Update()
 	{
@@ -23,7 +25,7 @@ public class BlockAdder : MonoBehaviour
 			Debug.DrawRay(cameraRay.origin, cameraRay.direction, Color.red, 100.0f);
 			
 			// Perform the raycast
-			if (Physics.Raycast(cameraRay, out hitInfo, 50, this.detectionMask.value))
+			if (Physics.Raycast(cameraRay, out hitInfo, 5, this.detectionMask.value))
 			{
 				if (hitInfo.collider == null)
 					return;
@@ -46,24 +48,24 @@ public class BlockAdder : MonoBehaviour
 						// Which face was hit? calculate target position for the new block
 						switch (blockInfo.face)
 						{
-						case BlockFace.LEFT:
-							x-=1;
-							break;
-						case BlockFace.RIGHT:
-							x+=1;
-							break;
-						case BlockFace.TOP:
-							y+=1;
-							break;
-						case BlockFace.BOTTOM:
-							y-=1;
-							break;
-						case BlockFace.FRONT:
-							z+=1;
-							break;
-						case BlockFace.BACK:
-							z-=1;
-							break;
+							case BlockFace.LEFT:
+								x-=1;
+								break;
+							case BlockFace.RIGHT:
+								x+=1;
+								break;
+							case BlockFace.TOP:
+								y+=1;
+								break;
+							case BlockFace.BOTTOM:
+								y-=1;
+								break;
+							case BlockFace.FRONT:
+								z+=1;
+								break;
+							case BlockFace.BACK:
+								z-=1;
+								break;
 						}
 
 						Vector3 chunkPos = chunk.chunkPosition;
@@ -92,7 +94,7 @@ public class BlockAdder : MonoBehaviour
 
 						// Finally place the object
 						GameObject chunkObject = chunk.master.GetChunkObject((int) chunkPos.x, (int) chunkPos.z);
-						chunkObject.GetComponent<CubicTerrainChunk>().chunkData.SetVoxel(x,y,z,1);
+						chunkObject.GetComponent<CubicTerrainChunk>().chunkData.SetVoxel(x,y,z,(short)this.blockId);
 					}
 				}
 			}

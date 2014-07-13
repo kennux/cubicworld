@@ -1,15 +1,15 @@
-﻿Shader "VoxelEngine/TerrainShader" {
+﻿Shader "VoxelEngine/AlphaTerrainShader" {
 	Properties {
 		_MainTex ("Base (RGB)", 2D) = "white" {}
 	}
 	SubShader {
-		Tags { "RenderType"="Opaque" }
+		Tags { "RenderType"="Transparent" "Queue" = "Transparent" }
 		LOD 200
 		Zwrite On
 		ZTest On
 		
 		CGPROGRAM
-		#pragma surface surf Lambert
+		#pragma surface surf Lambert alpha
 		
 		sampler2D _MainTex;
 

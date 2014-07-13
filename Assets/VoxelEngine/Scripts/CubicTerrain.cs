@@ -25,6 +25,11 @@ public class CubicTerrain : MonoBehaviour
 	public int chunkHeight=16;
 	public int chunkDepth=32;
 
+	/// <summary>
+	/// If set to true then the chunk where the player stands on will get loaded first.
+	/// </summary>
+	public bool loadPlayerChunkFirst = false;
+
 	// Generator
 	private ATerrainGenerator terrainGenerator;
 
@@ -35,6 +40,11 @@ public class CubicTerrain : MonoBehaviour
 	/// The terrain material.
 	/// </summary>
 	public Material terrainMaterial;
+
+	/// <summary>
+	/// If smooth chunk loading is activated, lag will get prevented by not loading all chunks at once.
+	/// </summary>
+	public bool smoothChunkLoading;
 
 	#region Helper functions and classes
 	
@@ -163,6 +173,10 @@ public class CubicTerrain : MonoBehaviour
 
 		// Init
 		this.terrainMaterial.SetTexture ("_MainTex", Blocks.textureAtlas);
+
+		if (!this.loadPlayerChunkFirst)
+			return;
+
 		Vector3 chunkPosition = this.GetChunkPosition(this.playerTransform.position);
 		this.GenerateChunk((int)chunkPosition.x,(int)chunkPosition.z);
 	}
