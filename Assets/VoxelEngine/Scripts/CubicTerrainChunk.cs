@@ -98,7 +98,7 @@ public class CubicTerrainChunk : MonoBehaviour
 	{
 		public Vector3[] vertices;
 		public int[] triangles;
-		// public Color[] colors;
+		public int[] transparentTriangles;
 		public Vector2[] uvs;
 	}
 
@@ -150,11 +150,6 @@ public class CubicTerrainChunk : MonoBehaviour
 		get { return (this._isDirty || (this.chunkData != null && this.chunkData.isDirty)); }
 		set { this._isDirty = value; if (this.chunkData != null) { this.chunkData.isDirty = value; } }
 	}
-
-	/// <summary>
-	/// The terrain material.
-	/// </summary>
-	public Material terrainMaterial;
 
 	/// <summary>
 	/// The renderer.
@@ -220,7 +215,10 @@ public class CubicTerrainChunk : MonoBehaviour
 						newMesh.vertices = meshData.vertices; // this.newMeshData.vertices;
 						// newMesh.colors = this.newMeshData.colors;
 						newMesh.uv = meshData.uvs; // this.newMeshData.uvs;
-						newMesh.triangles = meshData.triangles; // this.newMeshData.triangles;
+						// newMesh.triangles = meshData.triangles; // this.newMeshData.triangles;
+						newMesh.subMeshCount = 2;
+						newMesh.SetTriangles(meshData.triangles, 0);
+						newMesh.SetTriangles(meshData.transparentTriangles, 1);
 						newMesh.RecalculateBounds ();
 						newMesh.RecalculateNormals ();
 						newMesh.Optimize();
@@ -263,7 +261,7 @@ public class CubicTerrainChunk : MonoBehaviour
 
 						filter.sharedMesh = newMesh;
 						collider.sharedMesh = newMesh;
-						renderer.material = this.terrainMaterial;
+						renderer.materials = new Material[] { this.master.terrainMaterial, this.master.transparentTerrainMaterial };
                     }
                     
                     // Cleanup
@@ -312,14 +310,16 @@ public class CubicTerrainChunk : MonoBehaviour
 	{
 		CubicTerrainData.VoxelData[][][] voxelData = this._chunkData.voxelData;
 		int indicesCounter = 0;
+		int transparentIndicesCounter = 0;
 		
 		List<Vector3> vertices = new List<Vector3> ();
 		List<int> indices = new List<int> ();
 		List<int> lastIndices = new List<int> ();
 		List<Vector2> uvs = new List<Vector2> ();
 		List<Color> colors = new List<Color> ();
-
+		
 		Dictionary<int, TriangleBlockInfo> triangleLookupTable = new Dictionary<int, TriangleBlockInfo> ();
+		Dictionary<int, TriangleBlockInfo> transparentTriangleLookupTable = new Dictionary<int, TriangleBlockInfo> ();
 
 		// Determine block visibilities
 		for (int x = 0; x < this._chunkData.width; x++)
@@ -336,52 +336,73 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (x == 0 || (voxelData[x-1][y][z] == null || voxelData[x-1][y][z].blockId < 0 || voxelData[x-1][y][z].transparent))
                     {
                         // Un-Covered! Add mesh data!
-						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, leftSideVertices, leftSideIndices, indicesCounter,x,y,z, Color.blue, Blocks.GetBlock(voxelData[x][y][z].blockId).leftUv, BlockFace.LEFT, voxelData[x][y][z].transparent);
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, transparentTriangleLookupTable, leftSideVertices, leftSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.blue, Blocks.GetBlock(voxelData[x][y][z].blockId).leftUv, BlockFace.LEFT, voxelData[x][y][z].transparent);
+						if (voxelData[x][y][z].transparent)
+							transparentIndicesCounter+=leftSideVertices.Length;
 						indicesCounter += leftSideVertices.Length;
 					}
 					// Right side un-covered?
 					if (x == this._chunkData.width -1 || ((voxelData[x+1][y][z] == null || voxelData[x+1][y][z].blockId < 0 || voxelData[x+1][y][z].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, rightSideVertices, rightSideIndices, indicesCounter,x,y,z, Color.black, Blocks.GetBlock(voxelData[x][y][z].blockId).rightUv, BlockFace.RIGHT, voxelData[x][y][z].transparent);
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, transparentTriangleLookupTable, rightSideVertices, rightSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.black, Blocks.GetBlock(voxelData[x][y][z].blockId).rightUv, BlockFace.RIGHT, voxelData[x][y][z].transparent);
+						if (voxelData[x][y][z].transparent)
+							transparentIndicesCounter+=rightSideVertices.Length;
 						indicesCounter += rightSideVertices.Length;
 					}
 					// Top side un-covered?
 					if (y == this._chunkData.height-1 || ((voxelData[x][y+1][z] == null || voxelData[x][y+1][z].blockId < 0 || voxelData[x][y+1][z].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, topSideVertices, topSideIndices, indicesCounter,x,y,z, Color.gray, Blocks.GetBlock(voxelData[x][y][z].blockId).topUv, BlockFace.TOP, voxelData[x][y][z].transparent); // Blocks.GetBlock(voxelData[x][y][z].blockId).topUv);
-						indicesCounter += topSideVertices.Length;
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, transparentTriangleLookupTable, topSideVertices, topSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.gray, Blocks.GetBlock(voxelData[x][y][z].blockId).topUv, BlockFace.TOP, voxelData[x][y][z].transparent); // Blocks.GetBlock(voxelData[x][y][z].blockId).topUv);
+						if (voxelData[x][y][z].transparent)
+							transparentIndicesCounter+=topSideVertices.Length;
+                       	indicesCounter += topSideVertices.Length;
 					}
 					// Bottom side un-covered?
 					if (y == 0 || (voxelData[x][y-1][z] == null || voxelData[x][y-1][z].blockId < 0 || voxelData[x][y-1][z].transparent))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, bottomSideVertices, bottomSideIndices, indicesCounter,x,y,z, Color.green, Blocks.GetBlock(voxelData[x][y][z].blockId).bottomUv, BlockFace.BOTTOM, voxelData[x][y][z].transparent);
-						indicesCounter += bottomSideVertices.Length;
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, transparentTriangleLookupTable, bottomSideVertices, bottomSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.green, Blocks.GetBlock(voxelData[x][y][z].blockId).bottomUv, BlockFace.BOTTOM, voxelData[x][y][z].transparent);
+						if (voxelData[x][y][z].transparent)
+							transparentIndicesCounter+=bottomSideVertices.Length;
+                        else
+							indicesCounter += bottomSideVertices.Length;
 					}
 					// Back side un-covered?
 					if (z == 0 || (voxelData[x][y][z-1] == null || voxelData[x][y][z-1].blockId < 0 || voxelData[x][y][z-1].transparent))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, backSideVertices, backSideIndices, indicesCounter,x,y,z, Color.yellow, Blocks.GetBlock(voxelData[x][y][z].blockId).backUv, BlockFace.BACK, voxelData[x][y][z].transparent);
-						indicesCounter += backSideVertices.Length;
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, transparentTriangleLookupTable, backSideVertices, backSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.yellow, Blocks.GetBlock(voxelData[x][y][z].blockId).backUv, BlockFace.BACK, voxelData[x][y][z].transparent);
+						if (voxelData[x][y][z].transparent)
+							transparentIndicesCounter+=backSideVertices.Length;
+                        else
+							indicesCounter += backSideVertices.Length;
                     }
                     // Front side un-covered?
 					if (z == this._chunkData.depth-1 || ((voxelData[x][y][z+1] == null || voxelData[x][y][z+1].blockId < 0 || voxelData[x][y][z+1].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, lastIndices, uvs, colors, triangleLookupTable, frontSideVertices, frontSideIndices, indicesCounter,x,y,z, Color.red, Blocks.GetBlock(voxelData[x][y][z].blockId).frontUv, BlockFace.FRONT, voxelData[x][y][z].transparent);
-						indicesCounter += frontSideVertices.Length;
+						WriteSideData(vertices, indices, uvs, colors, triangleLookupTable, transparentTriangleLookupTable, frontSideVertices, frontSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.red, Blocks.GetBlock(voxelData[x][y][z].blockId).frontUv, BlockFace.FRONT, voxelData[x][y][z].transparent);
+						if (voxelData[x][y][z].transparent)
+							transparentIndicesCounter+=frontSideVertices.Length;
+                        else
+							indicesCounter += frontSideVertices.Length;
 					}
 				}
 			}
 		}
 
+		// Pre-process triangle info list
+		foreach (KeyValuePair<int, TriangleBlockInfo> tbi in transparentTriangleLookupTable)
+		{
+			triangleLookupTable.Add(((indicesCounter / 4) * 6) + tbi.Key, tbi.Value);
+		}
+
 		// Set mesh data
 		lock (this.meshDataLockObject)
 		{
-			indices.AddRange(lastIndices);
+			// indices.AddRange(lastIndices);
 			int verticeCount = vertices.Count;
 			int verticesAlreadySelected = 0;
 			int trianglesAlreadySelected = 0;
@@ -397,19 +418,31 @@ public class CubicTerrainChunk : MonoBehaviour
 				Vector3[] selectedVertices = vertices.Skip(verticesAlreadySelected).Take(verticesToSelect).ToArray();
 				Vector2[] selectedUvs = uvs.Skip(verticesAlreadySelected).Take(verticesToSelect).ToArray();
 				int[] selectedTriangles = indices.Skip(trianglesAlreadySelected).Take(trianglesToSelect).ToArray();
-				
+
+				List<int> transparentTriangles = new List<int>();
+				List<int> nonTransparentTriangles = new List<int>();
 				
 				// Preprocess indices
 				for(int i = 0; i < selectedTriangles.Length; i++)
 				{
-					selectedTriangles[i]=selectedTriangles[i]-verticesAlreadySelected;
+					if (selectedTriangles[i] < 0)
+					{
+						// Transparent triangle
+						transparentTriangles.Add (Mathf.Abs(selectedTriangles[i])-verticesAlreadySelected);
+					}
+					else
+					{
+						// Non-transparent triangles
+						nonTransparentTriangles.Add (selectedTriangles[i]-verticesAlreadySelected);
+					}
 				}
 				
 				trianglesAlreadySelected+=trianglesToSelect;
 				verticesAlreadySelected+=verticesToSelect;
 
 				meshData.vertices = selectedVertices;
-				meshData.triangles = selectedTriangles;
+				meshData.triangles = nonTransparentTriangles.ToArray();
+				meshData.transparentTriangles = transparentTriangles.ToArray();
 				meshData.uvs = selectedUvs;
 
 				// this.newMeshData.colors = colors.ToArray ();
@@ -440,27 +473,39 @@ public class CubicTerrainChunk : MonoBehaviour
 	/// <param name="uv">Uv.</param>
 	/// <param name="face">Face.</param>
 	/// <param name="transparent">If set to <c>true</c> transparent.</param>
-	private static void WriteSideData(List<Vector3> vertices, List<int> indices, List<int> lastIndices, List<Vector2> uvs, List<Color> colors, Dictionary<int, TriangleBlockInfo> triangleLookupTable, Vector3[] sideVertices, int[] sideIndices, int indicesCounter, int x, int y, int z, Color color, Vector2[] uv, BlockFace face, bool transparent)
+	private static void WriteSideData(List<Vector3> vertices, List<int> indices, List<Vector2> uvs, List<Color> colors, Dictionary<int, TriangleBlockInfo> triangleLookupTable, Dictionary<int, TriangleBlockInfo> transparentTriangleLookupTable, Vector3[] sideVertices, int[] sideIndices, int indicesCounter, int transparentIndicesCounter, int x, int y, int z, Color color, Vector2[] uv, BlockFace face, bool transparent)
 	{
 		// 4 vertices per face, so divide indicesCounter which is the current vertex by 4.
-		int faceCount = indicesCounter / 4;
 
 		TriangleBlockInfo blockInfo = new TriangleBlockInfo (x, y, z);
 		blockInfo.face = face;
 
 		// Add indices to the update list
-		triangleLookupTable.Add((faceCount*6), blockInfo);
-		triangleLookupTable.Add((faceCount*6)+1, blockInfo);
-		triangleLookupTable.Add((faceCount*6)+2, blockInfo);
-		triangleLookupTable.Add((faceCount*6)+3, blockInfo);
-		triangleLookupTable.Add((faceCount*6)+4, blockInfo);
-		triangleLookupTable.Add((faceCount*6)+5, blockInfo);
+		if (transparent)
+		{
+			int faceCount = transparentIndicesCounter / 4;
+			transparentTriangleLookupTable.Add((faceCount*6), blockInfo);
+			transparentTriangleLookupTable.Add((faceCount*6)+3, blockInfo);
+		}
+		else
+		{
+			int faceCount = indicesCounter / 4;
+			triangleLookupTable.Add((faceCount*6), blockInfo);
+			//triangleLookupTable.Add((faceCount*6)+1, blockInfo);
+			//triangleLookupTable.Add((faceCount*6)+2, blockInfo);
+			triangleLookupTable.Add((faceCount*6)+3, blockInfo);
+			//triangleLookupTable.Add((faceCount*6)+4, blockInfo);
+			//triangleLookupTable.Add((faceCount*6)+5, blockInfo);
+		}
 
 		// Calculate absolute vertex index count.
 		int[] absoluteIndices = new int[sideIndices.Length];
 		for (int i = 0; i < sideIndices.Length; i++)
 		{
-			absoluteIndices[i] = indicesCounter+sideIndices[i];
+			absoluteIndices[i] = indicesCounter+transparentIndicesCounter+sideIndices[i];
+
+			if (transparent)
+				absoluteIndices[i]*=-1;
 		}
 
 		// Transform vertices based on the block's position.
@@ -478,10 +523,7 @@ public class CubicTerrainChunk : MonoBehaviour
 		vertices.AddRange (absoluteVertices);
 
 		// Write indices
-		if (transparent)
-			lastIndices.AddRange (absoluteIndices);
-		else
-			indices.AddRange (absoluteIndices);
+		indices.AddRange (absoluteIndices);
 
 		uvs.AddRange (uv);
 	}

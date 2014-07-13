@@ -32,7 +32,7 @@ public class BlockAdder : MonoBehaviour
 				
 				// get collider parent
 				Transform chunkTransform = hitInfo.collider.transform.parent;
-				
+
 				if (chunkTransform != null)
 				{
 					// Chunk hit?

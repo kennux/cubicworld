@@ -40,6 +40,7 @@ public class CubicTerrain : MonoBehaviour
 	/// The terrain material.
 	/// </summary>
 	public Material terrainMaterial;
+	public Material transparentTerrainMaterial;
 
 	/// <summary>
 	/// If smooth chunk loading is activated, lag will get prevented by not loading all chunks at once.
@@ -173,6 +174,7 @@ public class CubicTerrain : MonoBehaviour
 
 		// Init
 		this.terrainMaterial.SetTexture ("_MainTex", Blocks.textureAtlas);
+		this.transparentTerrainMaterial.SetTexture ("_MainTex", Blocks.textureAtlas);
 
 		if (!this.loadPlayerChunkFirst)
 			return;
@@ -227,7 +229,6 @@ public class CubicTerrain : MonoBehaviour
 
 		this.chunkObjects.Add (new ChunkTuple (x, z), chunkObject);
 		CubicTerrainChunk terrainChunk = chunkObject.AddComponent<CubicTerrainChunk> ();
-		terrainChunk.terrainMaterial = this.terrainMaterial;
 		terrainChunk.chunkPosition = new Vector3 (x, 0, z);
 
 		lock (this.generationLockObject)
