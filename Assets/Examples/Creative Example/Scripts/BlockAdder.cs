@@ -39,14 +39,17 @@ public class BlockAdder : MonoBehaviour
 					CubicTerrainChunk chunk = chunkTransform.GetComponent<CubicTerrainChunk>();
 					if (chunk != null && !chunk.isDirty)
 					{
+						Debug.Log ("Triangle index: " + hitInfo.triangleIndex);
 						// Yes, chunk hit!
-						CubicTerrainChunk.TriangleBlockInfo blockInfo = chunk.triangleIndexInfo(hitInfo.triangleIndex);
-						int x = blockInfo.x;
-						int y = blockInfo.y;
-						int z = blockInfo.z;
+						BlockHitInfo blockHitInfo = chunk.GetBlockHitInfo(hitInfo);
+						int x = (int)blockHitInfo.hitBlock.x;
+						int y = (int)blockHitInfo.hitBlock.y;
+						int z = (int)blockHitInfo.hitBlock.z;
+
+						Debug.Log ("Debug: " + x + " " + y + " " + z + " " +blockHitInfo.hitFace);
 
 						// Which face was hit? calculate target position for the new block
-						switch (blockInfo.face)
+						switch (blockHitInfo.hitFace)
 						{
 							case BlockFace.LEFT:
 								x-=1;

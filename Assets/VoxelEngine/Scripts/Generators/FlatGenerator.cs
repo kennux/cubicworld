@@ -9,7 +9,10 @@ public class FlatGenerator : ATerrainGenerator
 		{
 			for (int z = 0; z < terrainDataObject.depth; z++)
 			{
-				terrainDataObject.SetVoxel(x,0,z,1);
+				for (int y = 0; y < 3; y++)
+				{
+					terrainDataObject.SetVoxel(x,y,z,1);
+				}
 			}
 		}
 	}
