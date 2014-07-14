@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 
 public class CubicTerrainData
 {
@@ -100,6 +102,7 @@ public class CubicTerrainData
 		}
 	}
 
+
 	/// <summary>
 	/// Sets the voxel at x|y|z.
 	/// 
@@ -128,8 +131,7 @@ public class CubicTerrainData
 	{
 		return this.voxelData[x][y][z];
 	}
-
-
+	
 	/// <summary>
 	/// Determines whether this instance has voxel at the specified x y z.
 	/// </summary>
@@ -140,5 +142,72 @@ public class CubicTerrainData
 	public bool HasVoxel(int x, int y, int z)
 	{
 		return this.voxelData [x] [y] [z] != null && this.voxelData [x] [y] [z].blockId >= 0;
+	}
+
+	/// <summary>
+	/// Returns the estimated size in bytes per chunk.
+	/// </summary>
+	/// <returns>The chunk bytes.</returns>
+	/// <param name="width">Width.</param>
+	/// <param name="height">Height.</param>
+	/// <param name="depth">Depth.</param>
+	public static int EstimatedChunkBytes(int width, int height, int depth)
+	{
+		return width * height * depth * 2; // * 2 for 1 short (block id)
+	}
+
+	/// <summary>
+	/// Serializes the chunk data to the given stream.
+	/// </summary>
+	/// <param name="stream">Stream.</param>
+	public void SerializeChunk(BufferedStream stream)
+	{
+		// Write chunk data
+		byte[] chunkData = new byte[EstimatedChunkBytes(this.width, this.height, this.depth)];
+		int counter = 0;
+		for (int x = 0; x < this.width; x++)
+		{   
+			for (int y = 0; y < this.height; y++)
+			{
+				for (int z = 0; z < this.depth; z++)
+				{
+					byte[] d = System.BitConverter.GetBytes(this.voxelData[x][y][z].blockId);
+					chunkData[counter]=d[0];
+					chunkData[counter+1]=d[1];
+					counter += 2;
+				}
+			}
+		}
+
+		// Write data
+		stream.Write (chunkData, 0, chunkData.Length);
+		stream.Flush ();
+	}
+
+	/// <summary>
+	/// Deserializes the chunk.
+	/// </summary>
+	/// <param name="stream">Stream.</param>
+	public void DeserializeChunk(BufferedStream stream)
+	{
+		// Read chunk data
+		byte[] chunkData = new byte[EstimatedChunkBytes(this.width, this.height, this.depth)];
+		stream.Read (chunkData, 0, EstimatedChunkBytes (this.width, this.height, this.depth));
+
+		int counter = 0;
+
+		// Parse chunk data
+		for (int x = 0; x < this.width; x++)
+		{   
+			for (int y = 0; y < this.height; y++)
+			{
+				for (int z = 0; z < this.depth; z++)
+				{
+					short blockId = System.BitConverter.ToInt16(chunkData, counter);
+					this.voxelData[x][y][z] = new VoxelData(blockId);
+					counter += 2;
+				}
+			}
+		}
 	}
 }

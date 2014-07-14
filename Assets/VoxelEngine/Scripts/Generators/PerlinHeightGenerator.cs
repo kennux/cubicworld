@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections;
-using SimplexNoise;
 
 public class PerlinHeightGenerator : ATerrainGenerator
 {
@@ -10,7 +9,7 @@ public class PerlinHeightGenerator : ATerrainGenerator
 	private const int grassId = 1;
 	private const int dirtId = 2;
 	private const int stoneId = 3;
-
+	
 	public override void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace)
 	{
 		for (int x = 0; x < terrainDataObject.width; x++)
@@ -20,7 +19,7 @@ public class PerlinHeightGenerator : ATerrainGenerator
 				// Get absolute positions for noise generation
 				float absX = (float) x + worldspace.x;
 				float absZ = (float) z + worldspace.z;
-
+				
 				float perlin = Mathf.PerlinNoise(absX * frequency, absZ * frequency);
 				int toY = (int)(perlin * ((float)terrainDataObject.height-1));
 				
@@ -28,7 +27,7 @@ public class PerlinHeightGenerator : ATerrainGenerator
 				{
 					terrainDataObject.SetVoxel(x,y,z,stoneId);
 				}
-
+				
 				for (int y = toY-3; y < toY-1; y++)
 				{
 					terrainDataObject.SetVoxel(x,y,z,dirtId);

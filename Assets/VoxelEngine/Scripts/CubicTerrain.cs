@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Threading;
+using System.IO;
 
 /// <summary>
 /// Cubic terrain.
@@ -46,6 +47,15 @@ public class CubicTerrain : MonoBehaviour
 	/// If smooth chunk loading is activated, lag will get prevented by not loading all chunks at once.
 	/// </summary>
 	public bool smoothChunkLoading;
+
+	/// <summary>
+	/// If this is turned on, the terrain will not load from the given terrain file
+	/// </summary>
+	public bool serializeTerrain;
+
+	public string terrainFilePath;
+
+	private BufferedStream terrainStream;
 
 	#region Helper functions and classes
 	
@@ -181,6 +191,10 @@ public class CubicTerrain : MonoBehaviour
 
 		Vector3 chunkPosition = this.GetChunkPosition(this.playerTransform.position);
 		this.GenerateChunk((int)chunkPosition.x,(int)chunkPosition.z);
+
+		// Terrain stream?
+		if (this.serializeTerrain)
+			this.terrainStream = new BufferedStream(File.Open (this.terrainFilePath, FileMode.OpenOrCreate));
 	}
 
 	/// <summary>
@@ -253,12 +267,26 @@ public class CubicTerrain : MonoBehaviour
 						// Generate chunk
 						this.terrainGenerator.GenerateTerrainData(job.Value.terrainChunkData, job.Value.worldspace);
 						job.Value.done = true;
+
+						// Write chunk data
+
 					}
 				}
 			}
 
 			Thread.Sleep (100);
 		}
+	}
+
+	/// <summary>
+	/// Loads the chunk from terrain stream.
+	/// </summary>
+	/// <returns>The chunk from terrain stream.</returns>
+	/// <param name="x">The x coordinate.</param>
+	/// <param name="z">The z coordinate.</param>
+	private CubicTerrainData LoadChunkFromTerrainStream(int x, int z)
+	{
+		return null;
 	}
 
 	/// <summary>

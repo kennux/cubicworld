@@ -15,7 +15,7 @@ public class PhysicsSample : MonoBehaviour
 				Vector3 spawnPosition = new Vector3
 				(
 						this.spawnRect.x + (this.spawnRect.width * Random.value),
-						20,
+						64,
 						this.spawnRect.y + (this.spawnRect.height * Random.value)
 				);
 

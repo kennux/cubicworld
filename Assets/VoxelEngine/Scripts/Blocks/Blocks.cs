@@ -85,7 +85,7 @@ public class Blocks
 
 		// Build atlas
 		textureAtlas = new Texture2D (4096, 4096, TextureFormat.RGBA32, false);
-		Rect[] uvRects = textureAtlas.PackTextures (atlasTextures, 1);
+		Rect[] uvRects = textureAtlas.PackTextures (atlasTextures, 0);
 
 		// Set texture atlas properties
 		textureAtlas.anisoLevel = 9;
