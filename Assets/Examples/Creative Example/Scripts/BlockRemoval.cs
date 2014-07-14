@@ -43,7 +43,6 @@ public class BlockRemoval : MonoBehaviour
 					CubicTerrainChunk chunk = chunkTransform.GetComponent<CubicTerrainChunk>();
 					if (chunk != null && !chunk.isDirty)
 					{
-						Debug.Log ("Triangle index: " + hitInfo.triangleIndex);
 						// Yes, chunk hit!
 						// Delete the clicked block
 						Vector3 block = chunk.GetBlockPosition(hitInfo, -0.5f);

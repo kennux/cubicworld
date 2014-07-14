@@ -85,7 +85,7 @@ public class Blocks
 
 		// Build atlas
 		textureAtlas = new Texture2D (4096, 4096, TextureFormat.RGBA32, false);
-		Rect[] uvRects = textureAtlas.PackTextures (atlasTextures, 0);
+		Rect[] uvRects = textureAtlas.PackTextures (atlasTextures, 1);
 
 		// Set texture atlas properties
 		textureAtlas.anisoLevel = 9;
@@ -99,11 +99,6 @@ public class Blocks
 		textureCoordinates = new Dictionary<int, Vector2[]> ();
 		foreach (KeyValuePair<int, Texture2D> texture in textures)
 		{
-			// Prevent other textures mixing in
-			uvRects[texture.Key].x+=uvPixelRatio*2;
-			uvRects[texture.Key].y+=uvPixelRatio*2;
-			uvRects[texture.Key].width-=uvPixelRatio*4;
-			uvRects[texture.Key].height-=uvPixelRatio*4;
 			textureCoordinates.Add (texture.Key,new Vector2[]
 			{
 				new Vector2(uvRects[texture.Key].x, uvRects[texture.Key].y),
