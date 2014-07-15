@@ -18,8 +18,7 @@ public class TestGenerator : ATerrainGenerator
 	
 	public override void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace)
 	{
-		this.rand = new System.Random ();
-
+		Simplex.remixPermutation (System.DateTime.Now.Millisecond * System.DateTime.Now.Second);
 		for (int x = 0; x < terrainDataObject.width; x++)
 		{
 			for (int z = 0; z < terrainDataObject.depth; z++)
@@ -47,11 +46,14 @@ public class TestGenerator : ATerrainGenerator
 						terrainDataObject.SetVoxel(x,toY-1,z,grassId);
 					}
 
-					// 3D-Noise
-					float noise = Simplex.Generate(absX * this.frequency3D, y * this.frequency3D, absZ * this.frequency3D);
+					if (y < 10)
+					{
+						// 3D-Noise
+						float noise = Simplex.Generate(absX * this.frequency3D, y * this.frequency3D, absZ * this.frequency3D);
 
-					if (noise < 0.5f && noise > 0.3f)
-						terrainDataObject.SetVoxel(x,y,z,-1);
+						if (noise < 0.5f && noise > 0.3f)
+							terrainDataObject.SetVoxel(x,y,z,-1);
+					}
 				}
 
 				// Tree generation possible

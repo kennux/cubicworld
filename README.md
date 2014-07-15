@@ -4,6 +4,22 @@ CubicWorld
 CubicWorld is a minecraft like voxel engine written for Unity3D.
 It has builtin realtime world generation and modification functions.
 
+Current Features
+===========
+* Easily add new world generators by just attaching them to the terrain object
+* Flexible block registration, blocks can get added at runtime
+* Transparent block rendering
+* Realtime editing the world
+* Unity physics integration (There will be a custom physics system in the future available)
+* Infinite random terrain
+* Chunk serialization and deserialization (for saving chunk data)
+
+Planned Features
+===========
+* A*-Pathfinding
+* Fluid simulation
+* Unity networking integration
+* Custom Physics / Collision system
 
 License
 ===========
