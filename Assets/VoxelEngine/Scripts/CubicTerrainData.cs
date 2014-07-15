@@ -171,7 +171,11 @@ public class CubicTerrainData
 			{
 				for (int z = 0; z < this.depth; z++)
 				{
-					byte[] d = System.BitConverter.GetBytes(this.voxelData[x][y][z].blockId);
+					short blockId = -1;
+					if (this.voxelData[x][y][z] != null)
+						blockId = this.voxelData[x][y][z].blockId;
+
+					byte[] d = System.BitConverter.GetBytes(blockId);
 					chunkData[counter]=d[0];
 					chunkData[counter+1]=d[1];
 					counter += 2;

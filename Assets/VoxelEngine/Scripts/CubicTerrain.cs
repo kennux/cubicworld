@@ -53,9 +53,10 @@ public class CubicTerrain : MonoBehaviour
 	/// </summary>
 	public bool serializeTerrain;
 
-	public string terrainFilePath;
+	public string chunkFilesPath;
 
-	private BufferedStream terrainStream;
+	[HideInInspector]
+	public CubicTerrainChunkFile chunkFile;
 
 	#region Helper functions and classes
 	
@@ -103,54 +104,6 @@ public class CubicTerrain : MonoBehaviour
 			this.worldspace = worldspace;
 		}
 	}
-	
-	// Chunk tuple implementation
-	// Used to identify chunks in a Dictionary
-	class ChunkTuple : System.Object
-	{
-		public int x,z;
-		
-		public ChunkTuple(int x, int z)
-		{
-			this.x = x;
-			this.z = z;
-		}
-		
-		public override bool Equals(object other)
-		{
-			ChunkTuple otherTuple = (ChunkTuple) other;
-			
-			if (otherTuple != null)
-			{
-				return (otherTuple.x == this.x && otherTuple.z == this.z);
-			}
-			
-			return false;
-		}
-		
-		public static bool operator ==(ChunkTuple a, ChunkTuple b)
-		{
-			if (((object)a == null) || ((object)b == null))
-				return false;
-			
-			return a.Equals(b);
-		}
-		
-		public static bool operator !=(ChunkTuple a, ChunkTuple b)
-		{
-			return !(a == b);
-		}
-		
-		public override string ToString()
-		{
-			return "ChunkTuple: " + this.x + "|" + this.z;
-		}
-		
-		public override int GetHashCode()
-		{
-			return ((short)this.z >> 16) | this.x;
-		}
-	}
 
 	#endregion
 
@@ -174,6 +127,10 @@ public class CubicTerrain : MonoBehaviour
 	/// </summary>
 	public void Start()
 	{
+		// Terrain stream?
+		if (this.serializeTerrain)
+			this.chunkFile = new CubicTerrainChunkFile(this.chunkFilesPath+"table.clt", this.chunkFilesPath+"data.cfd");
+
 		this.terrainGenerator = this.GetComponent<ATerrainGenerator> ();
 		this.chunkGenerationThread = new Thread (this.ChunkGenerationThread);
 		this.chunkGenerationThread.Start ();
@@ -191,10 +148,6 @@ public class CubicTerrain : MonoBehaviour
 
 		Vector3 chunkPosition = this.GetChunkPosition(this.playerTransform.position);
 		this.GenerateChunk((int)chunkPosition.x,(int)chunkPosition.z);
-
-		// Terrain stream?
-		if (this.serializeTerrain)
-			this.terrainStream = new BufferedStream(File.Open (this.terrainFilePath, FileMode.OpenOrCreate));
 	}
 
 	/// <summary>
@@ -264,11 +217,17 @@ public class CubicTerrain : MonoBehaviour
 				{
 					if (! job.Value.done)
 					{
-						// Generate chunk
-						this.terrainGenerator.GenerateTerrainData(job.Value.terrainChunkData, job.Value.worldspace);
+						// 
+						if (this.chunkFile.HasChunk(job.Key.x, job.Key.z))
+						{
+							job.Value.terrainChunkData = this.chunkFile.GetChunkData(job.Key.x, job.Key.z, this.chunkWidth, this.chunkHeight, this.chunkDepth);
+						}
+						else
+						{
+							this.terrainGenerator.GenerateTerrainData(job.Value.terrainChunkData, job.Value.worldspace);
+						}
 						job.Value.done = true;
 
-						// Write chunk data
 
 					}
 				}
@@ -355,5 +314,63 @@ public class CubicTerrain : MonoBehaviour
 	public GameObject GetChunkObject(int chunkX, int chunkZ)
 	{
 		return this.chunkObjects [new ChunkTuple (chunkX, chunkZ)];
+	}
+
+	/// <summary>
+	/// Raises the destroy event.
+	/// </summary>
+	public void OnDestroy()
+	{
+		if (this.chunkFile != null)
+			this.chunkFile.Close ();
+	}
+}
+
+
+// Chunk tuple implementation
+// Used to identify chunks in a Dictionary
+public class ChunkTuple : System.Object
+{
+	public int x,z;
+	
+	public ChunkTuple(int x, int z)
+	{
+		this.x = x;
+		this.z = z;
+	}
+	
+	public override bool Equals(object other)
+	{
+		ChunkTuple otherTuple = (ChunkTuple) other;
+		
+		if (otherTuple != null)
+		{
+			return (otherTuple.x == this.x && otherTuple.z == this.z);
+		}
+		
+		return false;
+	}
+	
+	public static bool operator ==(ChunkTuple a, ChunkTuple b)
+	{
+		if (((object)a == null) || ((object)b == null))
+			return false;
+		
+		return a.Equals(b);
+	}
+	
+	public static bool operator !=(ChunkTuple a, ChunkTuple b)
+	{
+		return !(a == b);
+	}
+	
+	public override string ToString()
+	{
+		return "ChunkTuple: " + this.x + "|" + this.z;
+	}
+	
+	public override int GetHashCode()
+	{
+		return ((short)this.z >> 16) | this.x;
 	}
 }

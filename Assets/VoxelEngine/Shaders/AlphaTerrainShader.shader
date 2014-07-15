@@ -3,10 +3,12 @@
 		_MainTex ("Base (RGB)", 2D) = "white" {}
 	}
 	SubShader {
-		Tags { "RenderType"="Transparent" "Queue" = "Transparent" }
+		Tags { "RenderType"="Transparent" "Queue" = "Transparent+100" }
 		LOD 200
+		Cull Off
 		Zwrite On
 		ZTest On
+		Blend SrcAlpha OneMinusSrcAlpha // Alpha blending
 		
 		CGPROGRAM
 		#pragma surface surf Lambert alpha
