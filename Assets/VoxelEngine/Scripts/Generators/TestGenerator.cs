@@ -46,7 +46,7 @@ public class TestGenerator : ATerrainGenerator
 						terrainDataObject.SetVoxel(x,toY-1,z,grassId);
 					}
 
-					if (y < 10)
+					if (y < 24)
 					{
 						// 3D-Noise
 						float noise = Simplex.Generate(absX * this.frequency3D, y * this.frequency3D, absZ * this.frequency3D);

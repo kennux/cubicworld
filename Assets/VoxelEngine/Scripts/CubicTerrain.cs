@@ -163,7 +163,9 @@ public class CubicTerrain : MonoBehaviour
 		{
 			for (int z = (int)chunkPosition.z - this.chunkPreloadRadius; z <= (int)chunkPosition.z + this.chunkPreloadRadius; z++)
 			{
-				if (! this.chunkObjects.ContainsKey(new ChunkTuple(x,z)))
+				// TODO Do correct iteration!
+				if (Vector3.Distance(this.GetChunkPosition(this.playerTransform.position), new Vector3(x,0,z)) < this.chunkPreloadRadius &&
+				    ! this.chunkObjects.ContainsKey(new ChunkTuple(x,z)))
 				{
 					this.GenerateChunk(x,z);
 				}
@@ -291,7 +293,7 @@ public class CubicTerrain : MonoBehaviour
 		foreach (KeyValuePair<ChunkTuple, GameObject> chunk in this.chunkObjects)
 		{
 			chunkVector = new Vector3(chunk.Key.x, 0, chunk.Key.z);
-			if (Vector3.Distance(chunkVector, this.GetChunkPosition(this.playerTransform.position)) > this.chunkPreloadRadius * 2)
+			if (Vector3.Distance(chunkVector, this.GetChunkPosition(this.playerTransform.position)) > this.chunkPreloadRadius)
 			{
 				chunksToDelete.Add (chunk.Key);
 			}
