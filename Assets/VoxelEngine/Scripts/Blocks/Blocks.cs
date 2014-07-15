@@ -93,8 +93,6 @@ public class Blocks
 		textureAtlas.wrapMode = TextureWrapMode.Clamp;
 		textureAtlas.Apply ();
 
-		float uvPixelRatio = 1 / textureAtlas.width;
-
 		// Save uvs
 		textureCoordinates = new Dictionary<int, Vector2[]> ();
 		foreach (KeyValuePair<int, Texture2D> texture in textures)

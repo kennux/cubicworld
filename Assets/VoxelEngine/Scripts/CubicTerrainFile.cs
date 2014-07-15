@@ -7,7 +7,7 @@ using System.IO;
 /// 
 /// This class is fully thread-safe.
 /// </summary>
-public class CubicTerrainChunkFile
+public class CubicTerrainFile
 {
 	/// <summary>
 	/// The chunk lookup table file path.
@@ -32,7 +32,7 @@ public class CubicTerrainChunkFile
 	/// </summary>
 	/// <param name="chunkLookupTableFile">Chunk lookup table file.</param>
 	/// <param name="chunkDataFile">Chunk data file.</param>
-	public CubicTerrainChunkFile(string chunkLookupTableFile, string chunkDataFile)
+	public CubicTerrainFile(string chunkLookupTableFile, string chunkDataFile)
 	{
 		this.chunkLookupTableFile = chunkLookupTableFile;
 		this.chunkDataFile = chunkDataFile;
@@ -67,8 +67,6 @@ public class CubicTerrainChunkFile
 
 				this.chunkLookupTable.Add(new ChunkTuple(x,z), position);
 			}
-
-			int j = 0;
 		}
 	}
 

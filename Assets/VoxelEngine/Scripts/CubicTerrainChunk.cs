@@ -374,7 +374,8 @@ public class CubicTerrainChunk : MonoBehaviour
 		}
 
 		// Write mesh data update
-		this.master.chunkFile.SetChunkData ((int)this.chunkPosition.x, (int)this.chunkPosition.z, this.chunkData);
+		if (this.master.terrainFile != null)
+			this.master.terrainFile.SetChunkData ((int)this.chunkPosition.x, (int)this.chunkPosition.z, this.chunkData);
 
 		// Set mesh data
 		lock (this.meshDataLockObject)

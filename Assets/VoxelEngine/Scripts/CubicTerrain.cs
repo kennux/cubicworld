@@ -56,7 +56,7 @@ public class CubicTerrain : MonoBehaviour
 	public string chunkFilesPath;
 
 	[HideInInspector]
-	public CubicTerrainChunkFile chunkFile;
+	public CubicTerrainFile terrainFile;
 
 	#region Helper functions and classes
 	
@@ -129,7 +129,7 @@ public class CubicTerrain : MonoBehaviour
 	{
 		// Terrain stream?
 		if (this.serializeTerrain)
-			this.chunkFile = new CubicTerrainChunkFile(this.chunkFilesPath+"table.clt", this.chunkFilesPath+"data.cfd");
+			this.terrainFile = new CubicTerrainFile(this.chunkFilesPath+"table.clt", this.chunkFilesPath+"data.cfd");
 
 		this.terrainGenerator = this.GetComponent<ATerrainGenerator> ();
 		this.chunkGenerationThread = new Thread (this.ChunkGenerationThread);
@@ -218,9 +218,9 @@ public class CubicTerrain : MonoBehaviour
 					if (! job.Value.done)
 					{
 						// 
-						if (this.chunkFile.HasChunk(job.Key.x, job.Key.z))
+						if (this.terrainFile != null && this.terrainFile.HasChunk(job.Key.x, job.Key.z))
 						{
-							job.Value.terrainChunkData = this.chunkFile.GetChunkData(job.Key.x, job.Key.z, this.chunkWidth, this.chunkHeight, this.chunkDepth);
+							job.Value.terrainChunkData = this.terrainFile.GetChunkData(job.Key.x, job.Key.z, this.chunkWidth, this.chunkHeight, this.chunkDepth);
 						}
 						else
 						{
@@ -321,8 +321,8 @@ public class CubicTerrain : MonoBehaviour
 	/// </summary>
 	public void OnDestroy()
 	{
-		if (this.chunkFile != null)
-			this.chunkFile.Close ();
+		if (this.terrainFile != null)
+			this.terrainFile.Close ();
 	}
 }
 
