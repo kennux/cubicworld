@@ -3,6 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
+/// <summary>
+/// Cubic terrain data class.
+/// 
+/// This class is thread-safe!
+/// </summary>
 public class CubicTerrainData
 {
 	// Voxel data struct
@@ -33,6 +38,11 @@ public class CubicTerrainData
 	{
 		get { return this._voxelData; }
 	}
+
+	/// <summary>
+	/// The voxel data lock object.
+	/// </summary>
+	private object voxelDataLockObject = new object();
 
 	/// <summary>
 	/// If this is set on true on the next update the mesh will get resynced to the voxel data.
@@ -114,9 +124,12 @@ public class CubicTerrainData
 	/// <param name="blockId">Block identifier. -1 means no block</param>
 	public void SetVoxel(int x, int y, int z, short blockId)
 	{
-		// Write voxel data
-		this._voxelData [x] [y] [z] = new VoxelData (blockId);
-		this._isDirty = true;
+		lock (this.voxelDataLockObject)
+		{
+			// Write voxel data
+			this._voxelData [x] [y] [z] = new VoxelData (blockId);
+			this._isDirty = true;
+		}
 	}
 
 	/// <summary>
@@ -129,7 +142,10 @@ public class CubicTerrainData
 	/// <param name="z">The z coordinate.</param>
 	public VoxelData GetVoxel (int x, int y, int z)
 	{
-		return this.voxelData[x][y][z];
+		lock (this.voxelDataLockObject)
+		{
+			return this.voxelData[x][y][z];
+		}
 	}
 	
 	/// <summary>
@@ -141,7 +157,10 @@ public class CubicTerrainData
 	/// <param name="z">The z coordinate.</param>
 	public bool HasVoxel(int x, int y, int z)
 	{
-		return this.voxelData [x] [y] [z] != null && this.voxelData [x] [y] [z].blockId >= 0;
+		lock (this.voxelDataLockObject)
+		{
+			return this.voxelData [x] [y] [z] != null && this.voxelData [x] [y] [z].blockId >= 0;
+		}
 	}
 
 	/// <summary>
@@ -162,23 +181,27 @@ public class CubicTerrainData
 	/// <param name="stream">Stream.</param>
 	public void SerializeChunk(BufferedStream stream)
 	{
-		// Write chunk data
 		byte[] chunkData = new byte[EstimatedChunkBytes(this.width, this.height, this.depth)];
-		int counter = 0;
-		for (int x = 0; x < this.width; x++)
-		{   
-			for (int y = 0; y < this.height; y++)
-			{
-				for (int z = 0; z < this.depth; z++)
-				{
-					short blockId = -1;
-					if (this.voxelData[x][y][z] != null)
-						blockId = this.voxelData[x][y][z].blockId;
 
-					byte[] d = System.BitConverter.GetBytes(blockId);
-					chunkData[counter]=d[0];
-					chunkData[counter+1]=d[1];
-					counter += 2;
+		lock (this.voxelDataLockObject)
+		{
+			// Write chunk data
+			int counter = 0;
+			for (int x = 0; x < this.width; x++)
+			{   
+				for (int y = 0; y < this.height; y++)
+				{
+					for (int z = 0; z < this.depth; z++)
+					{
+						short blockId = -1;
+						if (this.voxelData[x][y][z] != null)
+							blockId = this.voxelData[x][y][z].blockId;
+
+						byte[] d = System.BitConverter.GetBytes(blockId);
+						chunkData[counter]=d[0];
+						chunkData[counter+1]=d[1];
+						counter += 2;
+					}
 				}
 			}
 		}
@@ -194,24 +217,45 @@ public class CubicTerrainData
 	/// <param name="stream">Stream.</param>
 	public void DeserializeChunk(BufferedStream stream)
 	{
-		// Read chunk data
-		byte[] chunkData = new byte[EstimatedChunkBytes(this.width, this.height, this.depth)];
-		stream.Read (chunkData, 0, EstimatedChunkBytes (this.width, this.height, this.depth));
+		lock (this.voxelDataLockObject)
+		{
+			// Read chunk data
+			byte[] chunkData = new byte[EstimatedChunkBytes(this.width, this.height, this.depth)];
+			stream.Read (chunkData, 0, EstimatedChunkBytes (this.width, this.height, this.depth));
 
-		int counter = 0;
+			int counter = 0;
 
-		// Parse chunk data
-		for (int x = 0; x < this.width; x++)
-		{   
-			for (int y = 0; y < this.height; y++)
-			{
-				for (int z = 0; z < this.depth; z++)
+			// Parse chunk data
+			for (int x = 0; x < this.width; x++)
+			{   
+				for (int y = 0; y < this.height; y++)
 				{
-					short blockId = System.BitConverter.ToInt16(chunkData, counter);
-					this.voxelData[x][y][z] = new VoxelData(blockId);
-					counter += 2;
+					for (int z = 0; z < this.depth; z++)
+					{
+						short blockId = System.BitConverter.ToInt16(chunkData, counter);
+						this.voxelData[x][y][z] = new VoxelData(blockId);
+						counter += 2;
+					}
 				}
 			}
 		}
+	}
+
+	/// <summary>
+	/// Locks the voxel data.
+	/// You MUST use this function if you are doing direct xxx.voxelData[x][y][z] to ensure thread-safety.
+	/// </summary>
+	public void LockData()
+	{
+		System.Threading.Monitor.Enter (this.voxelDataLockObject);
+	}
+
+	/// <summary>
+	/// Unlocks the voxel data.
+	/// You MUST use this function if you are doing direct xxx.voxelData[x][y][z] to ensure thread-safety.
+	/// </summary>
+	public void UnlockData()
+	{
+		System.Threading.Monitor.Exit (this.voxelDataLockObject);
 	}
 }

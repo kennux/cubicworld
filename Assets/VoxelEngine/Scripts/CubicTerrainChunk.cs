@@ -295,6 +295,7 @@ public class CubicTerrainChunk : MonoBehaviour
 	/// <returns>The mesh.</returns>
 	private void GenerateMesh()
 	{
+		this._chunkData.LockData();
 		CubicTerrainData.VoxelData[][][] voxelData = this._chunkData.voxelData;
 		int indicesCounter = 0;
 		int transparentIndicesCounter = 0;
@@ -372,6 +373,8 @@ public class CubicTerrainChunk : MonoBehaviour
 				}
 			}
 		}
+
+		this._chunkData.UnlockData();
 
 		// Write mesh data update
 		if (this.master.terrainFile != null)
@@ -550,5 +553,22 @@ public class CubicTerrainChunk : MonoBehaviour
 		blockHitInfo.hitFace = f;
 
 		return blockHitInfo;
+	}
+
+	/// <summary>
+	/// Gets the absolute position by passing the position of an object relative to this chunk's start.
+	/// 
+	/// All coordinates are in block-space!
+	/// </summary>
+	/// <returns>The absolute position.</returns>
+	/// <param name="relativePosition">Relative position.</param>
+	public Vector3 GetAbsolutePosition(Vector3 relativePosition)
+	{
+		return new Vector3
+		(
+			this.chunkPosition.x * this.master.chunkWidth + relativePosition.x,
+			relativePosition.y,
+			this.chunkPosition.z * this.master.chunkDepth + relativePosition.z
+		);
 	}
 }

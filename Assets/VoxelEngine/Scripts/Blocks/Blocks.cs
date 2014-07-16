@@ -84,13 +84,15 @@ public class Blocks
 		}
 
 		// Build atlas
-		textureAtlas = new Texture2D (4096, 4096, TextureFormat.RGBA32, false);
-		Rect[] uvRects = textureAtlas.PackTextures (atlasTextures, 0);
+		Texture2D _textureAtlas = new Texture2D (4096, 4096, TextureFormat.RGBA32, false);
+		Rect[] uvRects = _textureAtlas.PackTextures (atlasTextures, 0);
+
+		textureAtlas = new Texture2D(_textureAtlas.width, _textureAtlas.height, TextureFormat.RGBA32, false);
+		textureAtlas.SetPixels (0,0,_textureAtlas.width, _textureAtlas.height, _textureAtlas.GetPixels (0,0,_textureAtlas.width, _textureAtlas.height));
 
 		// Set texture atlas properties
 		textureAtlas.anisoLevel = 9;
 		textureAtlas.filterMode = FilterMode.Point;
-		textureAtlas.wrapMode = TextureWrapMode.Clamp;
 		textureAtlas.Apply ();
 
 		// Save uvs

@@ -57,6 +57,26 @@ public class CubicTerrain : MonoBehaviour
 
 	[HideInInspector]
 	public CubicTerrainFile terrainFile;
+	
+	/// <summary>
+	/// The chunk generation thread.
+	/// </summary>
+	private Thread chunkGenerationThread;
+	
+	/// <summary>
+	/// The chunk game objects.
+	/// </summary>
+	private Dictionary<ChunkTuple, GameObject> chunkObjects;
+
+	/// <summary>
+	/// The chunk data.
+	/// </summary>
+	private Dictionary<ChunkTuple, CubicTerrainData> chunkData;
+	
+	/// <summary>
+	/// The generation jobs.
+	/// </summary>
+	private Dictionary<ChunkTuple, ChunkGenerationJob> generationJobs;
 
 	#region Helper functions and classes
 	
@@ -106,21 +126,6 @@ public class CubicTerrain : MonoBehaviour
 	}
 
 	#endregion
-
-	/// <summary>
-	/// The chunk generation thread.
-	/// </summary>
-	private Thread chunkGenerationThread;
-
-	/// <summary>
-	/// The chunk game objects.
-	/// </summary>
-	private Dictionary<ChunkTuple, GameObject> chunkObjects;
-
-	/// <summary>
-	/// The generation jobs.
-	/// </summary>
-	private Dictionary<ChunkTuple, ChunkGenerationJob> generationJobs;
 
 	/// <summary>
 	/// Start this instance.
@@ -240,17 +245,6 @@ public class CubicTerrain : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Loads the chunk from terrain stream.
-	/// </summary>
-	/// <returns>The chunk from terrain stream.</returns>
-	/// <param name="x">The x coordinate.</param>
-	/// <param name="z">The z coordinate.</param>
-	private CubicTerrainData LoadChunkFromTerrainStream(int x, int z)
-	{
-		return null;
-	}
-
-	/// <summary>
 	/// Updates the generation data.
 	/// If there are finished chunk generations their data will get added to the chunk object.
 	/// </summary>
@@ -316,6 +310,25 @@ public class CubicTerrain : MonoBehaviour
 	public GameObject GetChunkObject(int chunkX, int chunkZ)
 	{
 		return this.chunkObjects [new ChunkTuple (chunkX, chunkZ)];
+	}
+
+	/// <summary>
+	/// Gets the block at position x|y|z.
+	/// </summary>
+	/// <param name="x">The x coordinate.</param>
+	/// <param name="y">The y coordinate.</param>
+	/// <param name="z">The z coordinate.</param>
+	public CubicTerrainData.VoxelData GetBlock(int x, int y, int z)
+	{
+		// Calculate chunk position for calculating relative position
+		int chunkX = Mathf.FloorToInt (x / this.chunkWidth);
+		int chunkZ = Mathf.FloorToInt (z / this.chunkDepth);
+
+		// Calculate relative position
+		x -= chunkX * this.chunkWidth;
+		z -= chunkZ * this.chunkDepth;
+
+		return this.chunkData[new ChunkTuple(chunkX, chunkZ)].voxelData[x][y][z];
 	}
 
 	/// <summary>
