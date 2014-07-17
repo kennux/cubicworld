@@ -41,4 +41,35 @@ public class Block
 		this.backUv = Blocks.GetUvForTexture (backTexture);
 		this.transparentBlock = transparentBlock;
 	}
+
+	/// <summary>
+	/// Gets the uvs for face given face.
+	/// </summary>
+	/// <returns>The uvs for face.</returns>
+	/// <param name="face">Face.</param>
+	public Vector2[] GetUvsForFace(BlockFace face)
+	{
+		switch (face)
+		{
+			case BlockFace.FRONT:
+				return this.frontUv;
+
+			case BlockFace.BACK:
+				return this.backUv;
+
+			case BlockFace.LEFT:
+				return this.leftUv;
+
+			case BlockFace.RIGHT:
+				return this.rightUv;
+
+			case BlockFace.TOP:
+				return this.topUv;
+
+			case BlockFace.BOTTOM:
+				return this.bottomUv;
+		}
+
+		return null;
+	}
 }

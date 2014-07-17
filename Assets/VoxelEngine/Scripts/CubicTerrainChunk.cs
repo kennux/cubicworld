@@ -320,7 +320,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (x == 0 || (voxelData[x-1][y][z] == null || voxelData[x-1][y][z].blockId < 0 || voxelData[x-1][y][z].transparent))
                     {
                         // Un-Covered! Add mesh data!
-						WriteSideData(vertices, indices, uvs, colors, leftSideVertices, leftSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.blue, Blocks.GetBlock(voxelData[x][y][z].blockId).leftUv, BlockFace.LEFT, voxelData[x][y][z].transparent);
+						WriteSideData(vertices, indices, uvs, colors, leftSideVertices, leftSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.blue, voxelData[x][y][z].blockId, BlockFace.LEFT);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=leftSideVertices.Length;
 						indicesCounter += leftSideVertices.Length;
@@ -329,7 +329,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (x == this._chunkData.width -1 || ((voxelData[x+1][y][z] == null || voxelData[x+1][y][z].blockId < 0 || voxelData[x+1][y][z].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, rightSideVertices, rightSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.black, Blocks.GetBlock(voxelData[x][y][z].blockId).rightUv, BlockFace.RIGHT, voxelData[x][y][z].transparent);
+						WriteSideData(vertices, indices, uvs, colors, rightSideVertices, rightSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.black, voxelData[x][y][z].blockId, BlockFace.RIGHT);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=rightSideVertices.Length;
 						indicesCounter += rightSideVertices.Length;
@@ -338,7 +338,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (y == this._chunkData.height-1 || ((voxelData[x][y+1][z] == null || voxelData[x][y+1][z].blockId < 0 || voxelData[x][y+1][z].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, topSideVertices, topSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.gray, Blocks.GetBlock(voxelData[x][y][z].blockId).topUv, BlockFace.TOP, voxelData[x][y][z].transparent); // Blocks.GetBlock(voxelData[x][y][z].blockId).topUv);
+						WriteSideData(vertices, indices, uvs, colors, topSideVertices, topSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.gray, voxelData[x][y][z].blockId, BlockFace.TOP);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=topSideVertices.Length;
                        	indicesCounter += topSideVertices.Length;
@@ -347,7 +347,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (y == 0 || (voxelData[x][y-1][z] == null || voxelData[x][y-1][z].blockId < 0 || voxelData[x][y-1][z].transparent))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, bottomSideVertices, bottomSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.green, Blocks.GetBlock(voxelData[x][y][z].blockId).bottomUv, BlockFace.BOTTOM, voxelData[x][y][z].transparent);
+						WriteSideData(vertices, indices, uvs, colors, bottomSideVertices, bottomSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.green, voxelData[x][y][z].blockId, BlockFace.BOTTOM);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=bottomSideVertices.Length;
 						indicesCounter += bottomSideVertices.Length;
@@ -356,7 +356,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (z == 0 || (voxelData[x][y][z-1] == null || voxelData[x][y][z-1].blockId < 0 || voxelData[x][y][z-1].transparent))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, backSideVertices, backSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.yellow, Blocks.GetBlock(voxelData[x][y][z].blockId).backUv, BlockFace.BACK, voxelData[x][y][z].transparent);
+						WriteSideData(vertices, indices, uvs, colors, backSideVertices, backSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.yellow, voxelData[x][y][z].blockId, BlockFace.BACK);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=backSideVertices.Length;
 						indicesCounter += backSideVertices.Length;
@@ -365,7 +365,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (z == this._chunkData.depth-1 || ((voxelData[x][y][z+1] == null || voxelData[x][y][z+1].blockId < 0 || voxelData[x][y][z+1].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, frontSideVertices, frontSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.red, Blocks.GetBlock(voxelData[x][y][z].blockId).frontUv, BlockFace.FRONT, voxelData[x][y][z].transparent);
+						WriteSideData(vertices, indices, uvs, colors, frontSideVertices, frontSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.red, voxelData[x][y][z].blockId, BlockFace.FRONT);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=frontSideVertices.Length;
 						indicesCounter += frontSideVertices.Length;
@@ -451,8 +451,11 @@ public class CubicTerrainChunk : MonoBehaviour
 	/// <param name="uv">Uv.</param>
 	/// <param name="face">Face.</param>
 	/// <param name="transparent">If set to <c>true</c> transparent.</param>
-	private static void WriteSideData(List<Vector3> vertices, List<int> indices, List<Vector2> uvs, List<Color> colors, Vector3[] sideVertices, int[] sideIndices, int indicesCounter, int transparentIndicesCounter, int x, int y, int z, Color color, Vector2[] uv, BlockFace face, bool transparent)
+	private static void WriteSideData(List<Vector3> vertices, List<int> indices, List<Vector2> uvs, List<Color> colors, Vector3[] sideVertices, int[] sideIndices, int indicesCounter, int transparentIndicesCounter, int x, int y, int z, Color color, short blockId, BlockFace face)
 	{
+		Vector2[] uv = Blocks.GetBlock (blockId).GetUvsForFace (face);
+		bool transparent = Blocks.GetBlock (blockId).transparentBlock;
+
 		// Calculate absolute vertex index count.
 		int[] absoluteIndices = new int[sideIndices.Length];
 		for (int i = 0; i < sideIndices.Length; i++)

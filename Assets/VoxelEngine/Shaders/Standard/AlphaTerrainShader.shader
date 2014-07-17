@@ -1,15 +1,15 @@
-﻿Shader "VoxelEngine/TerrainShader" {
+﻿Shader "VoxelEngine/Standard/AlphaTerrainShader" {
 	Properties {
 		_MainTex ("Base (RGB)", 2D) = "white" {}
+		_Cutoff ("Alpha cutoff", Range(0,1)) = 0.5
 	}
 	SubShader {
-		Tags { "RenderType"="Opaque" }
+		Tags { "RenderType"="Transparent" "Queue" = "Transparent+100" }
 		LOD 200
-		Zwrite On
-		ZTest On
+		Blend SrcAlpha OneMinusSrcAlpha // Alpha blending
 		
 		CGPROGRAM
-		#pragma surface surf Lambert
+		#pragma surface surf Lambert alphatest:_Cutoff
 		
 		sampler2D _MainTex;
 

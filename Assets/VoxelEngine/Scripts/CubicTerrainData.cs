@@ -19,6 +19,8 @@ public class CubicTerrainData
 			get { return Blocks.GetBlock (this.blockId).transparentBlock; }
 		}
 
+		public byte rotation = 0;
+
 		public VoxelData(short blockId)
 		{
 			this.blockId = blockId;
