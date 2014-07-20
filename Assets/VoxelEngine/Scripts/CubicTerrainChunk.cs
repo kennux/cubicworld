@@ -103,6 +103,41 @@ public class CubicTerrainChunk : MonoBehaviour
 	{
 		2,1,0,0,3,2
 	};
+
+	/* Rotation face mappings
+	*  Indices:
+	*  0 - LEFT
+	*  1 - RIGHT
+	*  2 - TOP
+	*  3 - BOTTOM
+	*  4 - BACK
+	*  5 - FRONT
+	* 
+	*  Sides mapped from initial rotation.
+	*/
+	private static BlockFace[][] rotationMappings = new BlockFace[][]
+	{
+		// Facing front
+		new BlockFace[]
+		{
+			BlockFace.LEFT, BlockFace.RIGHT, BlockFace.TOP, BlockFace.BOTTOM, BlockFace.BACK, BlockFace.FRONT
+		},
+		// Facing right
+		new BlockFace[]
+		{
+			BlockFace.FRONT, BlockFace.BACK, BlockFace.TOP, BlockFace.BOTTOM, BlockFace.LEFT, BlockFace.RIGHT
+		},
+		// Facing back
+		new BlockFace[]
+		{
+			BlockFace.RIGHT, BlockFace.LEFT, BlockFace.TOP, BlockFace.BOTTOM, BlockFace.FRONT, BlockFace.BACK
+		},
+		// Facing left
+		new BlockFace[]
+		{
+			BlockFace.BACK, BlockFace.FRONT, BlockFace.TOP, BlockFace.BOTTOM, BlockFace.RIGHT, BlockFace.LEFT
+		}
+	};
 	
 	#endregion
 
@@ -316,11 +351,13 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (voxelData[x][y][z] == null || voxelData[x][y][z].blockId < 0)
 						continue;
 
+					BlockFace[] faceMappings = rotationMappings[voxelData[x][y][z].rotation];
+
 					// Left side un-covered?
 					if (x == 0 || (voxelData[x-1][y][z] == null || voxelData[x-1][y][z].blockId < 0 || voxelData[x-1][y][z].transparent))
                     {
                         // Un-Covered! Add mesh data!
-						WriteSideData(vertices, indices, uvs, colors, leftSideVertices, leftSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.blue, voxelData[x][y][z].blockId, BlockFace.LEFT);
+						WriteSideData(vertices, indices, uvs, colors, leftSideVertices, leftSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.blue, voxelData[x][y][z].blockId, faceMappings[0]);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=leftSideVertices.Length;
 						indicesCounter += leftSideVertices.Length;
@@ -329,7 +366,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (x == this._chunkData.width -1 || ((voxelData[x+1][y][z] == null || voxelData[x+1][y][z].blockId < 0 || voxelData[x+1][y][z].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, rightSideVertices, rightSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.black, voxelData[x][y][z].blockId, BlockFace.RIGHT);
+						WriteSideData(vertices, indices, uvs, colors, rightSideVertices, rightSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.black, voxelData[x][y][z].blockId, faceMappings[1]);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=rightSideVertices.Length;
 						indicesCounter += rightSideVertices.Length;
@@ -338,7 +375,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (y == this._chunkData.height-1 || ((voxelData[x][y+1][z] == null || voxelData[x][y+1][z].blockId < 0 || voxelData[x][y+1][z].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, topSideVertices, topSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.gray, voxelData[x][y][z].blockId, BlockFace.TOP);
+						WriteSideData(vertices, indices, uvs, colors, topSideVertices, topSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.gray, voxelData[x][y][z].blockId, faceMappings[2]);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=topSideVertices.Length;
                        	indicesCounter += topSideVertices.Length;
@@ -347,7 +384,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (y == 0 || (voxelData[x][y-1][z] == null || voxelData[x][y-1][z].blockId < 0 || voxelData[x][y-1][z].transparent))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, bottomSideVertices, bottomSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.green, voxelData[x][y][z].blockId, BlockFace.BOTTOM);
+						WriteSideData(vertices, indices, uvs, colors, bottomSideVertices, bottomSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.green, voxelData[x][y][z].blockId, faceMappings[3]);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=bottomSideVertices.Length;
 						indicesCounter += bottomSideVertices.Length;
@@ -356,7 +393,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (z == 0 || (voxelData[x][y][z-1] == null || voxelData[x][y][z-1].blockId < 0 || voxelData[x][y][z-1].transparent))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, backSideVertices, backSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.yellow, voxelData[x][y][z].blockId, BlockFace.BACK);
+						WriteSideData(vertices, indices, uvs, colors, backSideVertices, backSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.yellow, voxelData[x][y][z].blockId, faceMappings[4]);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=backSideVertices.Length;
 						indicesCounter += backSideVertices.Length;
@@ -365,7 +402,7 @@ public class CubicTerrainChunk : MonoBehaviour
 					if (z == this._chunkData.depth-1 || ((voxelData[x][y][z+1] == null || voxelData[x][y][z+1].blockId < 0 || voxelData[x][y][z+1].transparent)))
 					{
 						// Un-Covered!
-						WriteSideData(vertices, indices, uvs, colors, frontSideVertices, frontSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.red, voxelData[x][y][z].blockId, BlockFace.FRONT);
+						WriteSideData(vertices, indices, uvs, colors, frontSideVertices, frontSideIndices, indicesCounter, transparentIndicesCounter,x,y,z, Color.red, voxelData[x][y][z].blockId, faceMappings[5]);
 						if (voxelData[x][y][z].transparent)
 							transparentIndicesCounter+=frontSideVertices.Length;
 						indicesCounter += frontSideVertices.Length;
@@ -556,6 +593,18 @@ public class CubicTerrainChunk : MonoBehaviour
 		blockHitInfo.hitFace = f;
 
 		return blockHitInfo;
+	}
+
+	/// <summary>
+	/// Gets the facing from block 1 to block 2 transformed by the block's rotation.
+	/// TODO: Implement :D
+	/// </summary>
+	/// <returns>The facing.</returns>
+	/// <param name="block1">Block1.</param>
+	/// <param name="block2">Block2.</param>
+	public BlockFace GetFacing(Vector3 block1, Vector3 block2)
+	{
+		return BlockFace.LEFT;
 	}
 
 	/// <summary>

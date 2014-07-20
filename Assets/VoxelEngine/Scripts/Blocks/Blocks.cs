@@ -157,13 +157,3 @@ public class Blocks
 		return blocks [blockId];
 	}
 }
-
-public enum BlockFace
-{
-	LEFT,
-	RIGHT,
-	TOP,
-	BOTTOM,
-	FRONT,
-	BACK
-}

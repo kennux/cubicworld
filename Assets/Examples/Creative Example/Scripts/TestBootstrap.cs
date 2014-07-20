@@ -35,5 +35,6 @@ public class TestBootstrap : ABlockBootstrap
 		Blocks.RegisterBlock (5).SetTextures (bedrockId, bedrockId, bedrockId, bedrockId, bedrockId, bedrockId, false);
 		Blocks.RegisterBlock (6).SetTextures (treeId, treeId, treeId, treeId, treeId, treeId, false);
 		Blocks.RegisterBlock (7).SetTextures (leavesId, leavesId, leavesId, leavesId, leavesId, leavesId, true);
+		Blocks.RegisterBlock (8).SetTextures (leavesId, treeId, dirtId, grassTopId, grassSideId, glassId, true);
 	}
 }

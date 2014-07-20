@@ -244,6 +244,14 @@ public class CubicTerrainData
 	}
 
 	/// <summary>
+	/// Call this after data in voxelData was changed by the GetVoxel() function or direct access.
+	/// </summary>
+	public void DataUpdated()
+	{
+		this._isDirty = true;
+	}
+
+	/// <summary>
 	/// Locks the voxel data.
 	/// You MUST use this function if you are doing direct xxx.voxelData[x][y][z] to ensure thread-safety.
 	/// </summary>
@@ -260,4 +268,15 @@ public class CubicTerrainData
 	{
 		System.Threading.Monitor.Exit (this.voxelDataLockObject);
 	}
+}
+
+
+public enum BlockFace
+{
+	LEFT,
+	RIGHT,
+	TOP,
+	BOTTOM,
+	FRONT,
+	BACK
 }
