@@ -174,7 +174,7 @@ public class CubicTerrainData
 	/// <param name="depth">Depth.</param>
 	public static int EstimatedChunkBytes(int width, int height, int depth)
 	{
-		return width * height * depth * 2; // * 2 for 1 short (block id)
+		return width * height * depth * 3; // * 2 for 1 short (block id)
 	}
 
 	/// <summary>
@@ -202,7 +202,8 @@ public class CubicTerrainData
 						byte[] d = System.BitConverter.GetBytes(blockId);
 						chunkData[counter]=d[0];
 						chunkData[counter+1]=d[1];
-						counter += 2;
+						chunkData[counter+2]=d[1];
+						counter += 3;
 					}
 				}
 			}
@@ -235,8 +236,10 @@ public class CubicTerrainData
 					for (int z = 0; z < this.depth; z++)
 					{
 						short blockId = System.BitConverter.ToInt16(chunkData, counter);
+						byte rotation = chunkData[counter+2];
 						this.voxelData[x][y][z] = new VoxelData(blockId);
-						counter += 2;
+						this.voxelData[x][y][z].rotation = rotation;
+						counter += 3;
 					}
 				}
 			}
@@ -273,10 +276,10 @@ public class CubicTerrainData
 
 public enum BlockFace
 {
-	LEFT,
-	RIGHT,
-	TOP,
-	BOTTOM,
-	FRONT,
-	BACK
+	LEFT = 0,
+	RIGHT = 1,
+	TOP = 2,
+	BOTTOM = 3,
+	FRONT = 4,
+	BACK = 5
 }

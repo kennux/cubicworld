@@ -21,6 +21,11 @@ Planned Features
 * Unity networking integration
 * Custom Physics / Collision system
 
+Documentation
+===========
+Documentation is currently in-progress.
+API-Documentation: http://kennux.net/unity/cubicworld/apidoc/ (May not be up to date, documentation currently has a lower priority)
+
 License
 ===========
 The MIT License (MIT)

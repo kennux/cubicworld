@@ -548,6 +548,8 @@ public class CubicTerrainChunk : MonoBehaviour
 
 	/// <summary>
 	/// Gets the block hit info for the given raycast hit
+	/// Block facingsare in "physical space", which means they are not affected by the rotation of the block.
+	/// For getting the facing affected by rotation transform the facing by using the function <see cref="TransformFacing"/>TransformFacing()</see>.
 	/// </summary>
 	/// <returns>The block hit info.</returns>
 	/// <param name="hitInfo">Hit info.</param>
@@ -596,15 +598,25 @@ public class CubicTerrainChunk : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Gets the facing from block 1 to block 2 transformed by the block's rotation.
-	/// TODO: Implement :D
+	/// Transforms the given facing of the block at the given position.
 	/// </summary>
 	/// <returns>The facing.</returns>
-	/// <param name="block1">Block1.</param>
-	/// <param name="block2">Block2.</param>
-	public BlockFace GetFacing(Vector3 block1, Vector3 block2)
+	public BlockFace TransformFacing(BlockFace facing, int x, int y, int z)
 	{
-		return BlockFace.LEFT;
+		// Get the block's rotation and face mappings
+		byte rotation = this._chunkData.GetVoxel (x, y, z).rotation;
+		BlockFace [] faceMapping = rotationMappings [rotation];
+
+		// Transform the facing accordingly to the block's rotation.
+		switch (facing)
+		{
+			case BlockFace.LEFT: return faceMapping[0];
+			case BlockFace.RIGHT: return faceMapping[1];
+			case BlockFace.BACK: return faceMapping[4];
+			case BlockFace.FRONT: return faceMapping[5];
+		}
+
+		return facing;
 	}
 
 	/// <summary>
