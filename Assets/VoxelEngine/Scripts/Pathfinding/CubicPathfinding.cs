@@ -69,52 +69,38 @@ public class CubicPathfinding
 	/// </summary>
 	private void WorkerThread()
 	{
-		List<CubicPath> paths = new List<CubicPath>();
-
-		lock (this.pathQueueLock)
+		while (true)
 		{
-			// Check for work
-			while (this.pathQueue.Count > 0)
+			List<CubicPath> paths = new List<CubicPath>();
+
+			lock (this.pathQueueLock)
 			{
-				// Save path for calculation
-				paths.Add (this.pathQueue.Dequeue());
+				// Check for work
+				while (this.pathQueue.Count > 0)
+				{
+					// Save path for calculation
+					paths.Add (this.pathQueue.Dequeue());
+				}
 			}
+
+			// Do path calculations
+			foreach (CubicPath path in paths)
+			{
+				this.FindPath(path);
+			}
+
+			Thread.Sleep (10);
 		}
-
-		// Do path calculations
-		foreach (CubicPath path in paths)
-		{
-
-		}
-
-		// Wait before the next recursive call
-		Thread.Sleep (10);
-		this.WorkerThread ();
-	}
-}
-
-/// <summary>
-/// Cubic path information holder.
-/// Will get returned from the CubicPathfinder class (calculated in another thread).
-/// </summary>
-public class CubicPath
-{
-	public Vector3 startPos;
-	public Vector3 goalPos;
-
-	public bool isReady
-	{
-		get { return false; }
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="CubicPath"/> class.
+	/// Finds the path path.
 	/// </summary>
-	/// <param name="start">Start.</param>
-	/// <param name="goal">Goal.</param>
-	public CubicPath(Vector3 start, Vector3 goal)
+	/// <param name="path">Path.</param>
+	private void FindPath (CubicPath path)
 	{
-		this.startPos = start;
-		this.goalPos = goal;
+		Vector3 globalDirection = (path.goalPos - path.startPos).normalized;
+		List<Vector3> nodes = new List<Vector3> ();
+
 	}
 }
