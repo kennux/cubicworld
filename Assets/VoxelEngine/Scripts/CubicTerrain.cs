@@ -127,11 +127,29 @@ public class CubicTerrain : MonoBehaviour
 
 	#endregion
 
+	#region Singleton
+	private static CubicTerrain instance;
+
+	public static CubicTerrain GetInstance()
+	{
+		return instance;
+	}
+	#endregion
+
 	/// <summary>
 	/// Start this instance.
 	/// </summary>
 	public void Start()
 	{
+		// Singleton
+		if (instance != null)
+		{
+			Debug.LogError ("2 CubicTerrain Script GameObject detected! Error! Disabling this instance.");
+			this.enabled = false;
+			return;
+		}
+		instance = this;
+
 		// Terrain stream?
 		if (this.serializeTerrain)
 			this.terrainFile = new CubicTerrainFile(this.chunkFilesPath+"table.clt", this.chunkFilesPath+"data.cfd");

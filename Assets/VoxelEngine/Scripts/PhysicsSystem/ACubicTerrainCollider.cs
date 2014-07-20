@@ -20,7 +20,7 @@ public abstract class ACubicTerrainCollider : MonoBehaviour
 	/// The collider.
 	/// </summary>
 	[HideInInspector]
-	public ACubicTerrainCollider collider;
+	public new ACubicTerrainCollider collider;
 
 	/// <summary>
 	/// Do collision check against another collider.
