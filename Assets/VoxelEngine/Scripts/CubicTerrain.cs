@@ -49,6 +49,13 @@ public class CubicTerrain : MonoBehaviour
 	public bool smoothChunkLoading;
 
 	/// <summary>
+	/// If this is set to true chunks will get mesh colliders added to their game objects.
+	/// If not the CubicWorld physics system will get used (NOT DONE YET).
+	/// However, CubicWorld's physics system is NOT compatible with unity physics and VERY less precise (It is only a simple "block" physics system).
+	/// </summary>
+	public bool useMeshColliders = true;
+
+	/// <summary>
 	/// If this is turned on, the terrain will not load from the given terrain file
 	/// </summary>
 	public bool serializeTerrain;
@@ -160,6 +167,7 @@ public class CubicTerrain : MonoBehaviour
 
 		// Initialize dictionaries
 		this.chunkObjects = new Dictionary<ChunkTuple, GameObject> ();
+		this.chunkData = new Dictionary<ChunkTuple, CubicTerrainData> ();
 		this.generationJobs = new Dictionary<ChunkTuple, ChunkGenerationJob> ();
 
 		// Init
@@ -219,8 +227,8 @@ public class CubicTerrain : MonoBehaviour
 		chunkObject.transform.parent = this.transform;
 		chunkObject.layer = this.gameObject.layer;
 
-		this.chunkObjects.Add (new ChunkTuple (x, z), chunkObject);
 		CubicTerrainChunk terrainChunk = chunkObject.AddComponent<CubicTerrainChunk> ();
+		this.chunkObjects.Add (new ChunkTuple (x, z), chunkObject);
 		terrainChunk.chunkPosition = new Vector3 (x, 0, z);
 
 		lock (this.generationLockObject)
@@ -251,6 +259,7 @@ public class CubicTerrain : MonoBehaviour
 						{
 							this.terrainGenerator.GenerateTerrainData(job.Value.terrainChunkData, job.Value.worldspace);
 						}
+						this.chunkData.Add (job.Key, job.Value.terrainChunkData);
 						job.Value.done = true;
 
 
@@ -316,6 +325,7 @@ public class CubicTerrain : MonoBehaviour
 		{
 			Destroy (this.chunkObjects[t]);
 			this.chunkObjects.Remove (t);
+			this.chunkData.Remove (t);
 		}
 	}
 
@@ -329,7 +339,7 @@ public class CubicTerrain : MonoBehaviour
 	{
 		return this.chunkObjects [new ChunkTuple (chunkX, chunkZ)];
 	}
-
+	
 	/// <summary>
 	/// Gets the block at position x|y|z.
 	/// </summary>
@@ -341,12 +351,52 @@ public class CubicTerrain : MonoBehaviour
 		// Calculate chunk position for calculating relative position
 		int chunkX = Mathf.FloorToInt (x / this.chunkWidth);
 		int chunkZ = Mathf.FloorToInt (z / this.chunkDepth);
-
+		
 		// Calculate relative position
 		x -= chunkX * this.chunkWidth;
 		z -= chunkZ * this.chunkDepth;
+		
+		return this.chunkData[new ChunkTuple(chunkX, chunkZ)].GetVoxel(x,y,z);
+	}
+	
+	/// <summary>
+	/// Sets the block id at position x|y|z.
+	/// </summary>
+	/// <param name="x">The x coordinate.</param>
+	/// <param name="y">The y coordinate.</param>
+	/// <param name="z">The z coordinate.</param>
+	public void SetBlock(int x, int y, int z, short blockId)
+	{
+		// Calculate chunk position for calculating relative position
+		int chunkX = Mathf.FloorToInt (x / this.chunkWidth);
+		int chunkZ = Mathf.FloorToInt (z / this.chunkDepth);
+		
+		// Calculate relative position
+		x -= chunkX * this.chunkWidth;
+		z -= chunkZ * this.chunkDepth;
+		
+		this.chunkData[new ChunkTuple(chunkX, chunkZ)].SetVoxel(x,y,z,blockId);
+	}
 
-		return this.chunkData[new ChunkTuple(chunkX, chunkZ)].voxelData[x][y][z];
+	/// <summary>
+	/// Determines whether this instance has block the specified x y z.
+	/// Returns also false if the blockid at the given position is less than 0 (which means no block, air)
+	/// </summary>
+	/// <returns><c>true</c> if this instance has block the specified x y z; otherwise, <c>false</c>.</returns>
+	/// <param name="x">The x coordinate.</param>
+	/// <param name="y">The y coordinate.</param>
+	/// <param name="z">The z coordinate.</param>
+	public bool HasBlock(int x, int y, int z)
+	{
+		// Calculate chunk position for calculating relative position
+		int chunkX = Mathf.FloorToInt (x / this.chunkWidth);
+		int chunkZ = Mathf.FloorToInt (z / this.chunkDepth);
+		
+		// Calculate relative position
+		x -= chunkX * this.chunkWidth;
+		z -= chunkZ * this.chunkDepth;
+		
+		return this.chunkData[new ChunkTuple(chunkX, chunkZ)].HasVoxel(x,y,z);
 	}
 
 	/// <summary>
@@ -357,6 +407,24 @@ public class CubicTerrain : MonoBehaviour
 		if (this.terrainFile != null)
 			this.terrainFile.Close ();
 	}
+	
+	/// <summary>
+	/// Gets the center position of the block at the given position in worldspace.
+	/// </summary>
+	/// <returns>The absolute center position.</returns>
+	/// <param name="x">The x coordinate.</param>
+	/// <param name="y">The y coordinate.</param>
+	/// <param name="z">The z coordinate.</param>
+	public Vector3 GetWorldspaceCenterPosition(int x, int y, int z)
+	{
+		return new Vector3
+		(
+			x + 0.5f,
+			y + 0.5f,
+			z + 0.5f
+		);
+	}
+
 }
 
 

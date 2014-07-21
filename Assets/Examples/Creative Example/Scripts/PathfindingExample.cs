@@ -15,12 +15,24 @@ public class PathfindingExample : MonoBehaviour
 	// A* path points
 	private Vector3 startPoint = Vector3.zero;
 	private Vector3 goalPoint = Vector3.zero;
+
+	private CubicPath path;
 	
 	public void Update()
 	{
 		bool firstPoint = Input.GetKeyDown (KeyCode.P);
 		bool lastPoint = Input.GetKeyDown (KeyCode.L);
 		bool definePoint = firstPoint || lastPoint;
+
+		if (this.path != null && this.path.isReady)
+		{
+			Debug.Log ("Path found!");
+			foreach (Vector3 blockPos in this.path.pathData)
+			{
+				CubicTerrain.GetInstance().SetBlock((int)blockPos.x, (int)blockPos.y-1, (int)blockPos.z, -1);
+			}
+			this.path = null;
+		}
 
 		// Right mouse button.
 		if (definePoint)
@@ -119,6 +131,12 @@ public class PathfindingExample : MonoBehaviour
 		{
 			Debug.Log ("Starting A* path finding");
 
+			// Start pathfinding
+			CubicPathfinding pathfinder = CubicPathfinding.GetInstance();
+			this.path = pathfinder.GetPath(startPoint, goalPoint);
+
+			startPoint = Vector3.zero;
+			goalPoint = Vector3.zero;
 		}
 	}
 }

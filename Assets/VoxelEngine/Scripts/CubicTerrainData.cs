@@ -152,6 +152,7 @@ public class CubicTerrainData
 	
 	/// <summary>
 	/// Determines whether this instance has voxel at the specified x y z.
+	/// Returns also false if the voxel's block id is less than 0 (which means no block)
 	/// </summary>
 	/// <returns><c>true</c> if this instance has voxel at the specified x y z; otherwise, <c>false</c>.</returns>
 	/// <param name="x">The x coordinate.</param>

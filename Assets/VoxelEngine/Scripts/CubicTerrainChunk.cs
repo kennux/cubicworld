@@ -304,7 +304,8 @@ public class CubicTerrainChunk : MonoBehaviour
 						}
 
 						filter.sharedMesh = newMesh;
-						collider.sharedMesh = newMesh;
+						if (this.master.useMeshColliders)
+							collider.sharedMesh = newMesh;
 						renderer.materials = new Material[] { this.master.terrainMaterial, this.master.transparentTerrainMaterial };
                     }
                     

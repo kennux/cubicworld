@@ -43,6 +43,8 @@ public class CubicPathfinding
 	{
 		this.terrain = terrain;
 		this.workerThread = new Thread (this.WorkerThread);
+		this.workerThread.Start ();
+		this.pathQueue = new Queue<CubicPath> ();
 	}
 
 	/// <summary>
@@ -99,8 +101,139 @@ public class CubicPathfinding
 	/// <param name="path">Path.</param>
 	private void FindPath (CubicPath path)
 	{
-		Vector3 globalDirection = (path.goalPos - path.startPos).normalized;
-		List<Vector3> nodes = new List<Vector3> ();
+		// List definitions
+		List<PathNode> closedList = new List<PathNode>();
 
+		// Start pathfinding
+		PathNode startNode = new PathNode(path.startPos, null, 0, path.goalPos);
+		PathNode currentNode = startNode;
+		closedList.Add (startNode);
+		
+		bool pathFound = false;
+		bool noPath = false;
+		int movementCost = 0;
+		while (!pathFound && !noPath)
+		{
+			// Calculate block direction positions
+			Vector3[] positions = new Vector3[]
+			{
+				// Front
+				currentNode.position + Vector3.forward,
+				// Back
+				currentNode.position + Vector3.back,
+				// Left
+				currentNode.position + Vector3.left,
+				// Right
+				currentNode.position + Vector3.right
+			};
+
+			// Analyze surrounding path nodes
+			PathNode[] nodes = new PathNode[positions.Length];
+			PathNode lowestCostNode = null;
+
+			// Check which ones are walkable and add them to the nodes-array
+			for (int i = 0; i < positions.Length; i++)
+			{
+				// Movement cost from this to the surrounding block
+				int currentMovementCost = (int)(Vector3.Distance(positions[i], currentNode.position)*10);
+
+				// Check if this node is walkable
+				if (!this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y, (int)positions[i].z))
+				{
+					// Add node to the nodes-array
+					nodes[i] = new PathNode(positions[i], currentNode, movementCost+currentMovementCost, path.goalPos);
+				}
+
+				// Check for lowest cost
+				if (nodes[i] != null && (lowestCostNode == null || nodes[i].completeCost < lowestCostNode.completeCost))
+				{
+					lowestCostNode = nodes[i];
+				}
+			}
+
+			// Failed? o_O
+			if (lowestCostNode == null)
+			{
+				noPath = true;
+				break;
+			}
+
+			if (currentNode.position == path.goalPos)
+				pathFound=true;
+
+			// Put the lowest cost node on the closed list
+			closedList.Add (lowestCostNode);
+			currentNode = lowestCostNode;
+		}
+
+		// No path found?
+		if (noPath)
+		{
+			// :'(
+			path.SetPathData(null);
+		}
+		else
+		{
+			// :^)
+			Vector3[] pathData = new Vector3[closedList.Count];
+			for (int i = 0; i < closedList.Count; i++)
+			{
+				pathData[i]=closedList[i].position;
+			}
+
+			path.SetPathData(pathData);
+		}
+	}
+}
+
+/// <summary>
+/// Path node implementation.
+/// Holds all data for path nodes.
+/// 
+/// Implementation details:
+/// All costs are distances times 10.
+/// So heuristic cost is calculated by (int)(Vector3.distance(myPosition, goalPosition) * 10).
+/// This is done to avoid floating-point calculations for better performance.
+/// </summary>
+public class PathNode
+{
+	public Vector3 position;
+
+	/// <summary>
+	/// The movement cost.
+	/// </summary>
+	public int movementCost;
+
+	/// <summary>
+	/// The heuristic cost from this position to the target position.
+	/// </summary>
+	public int heuristicCost;
+
+	/// <summary>
+	/// The complete cost (movementCost + heuristicCost).
+	/// </summary>
+	public int completeCost;
+
+	/// <summary>
+	/// The owner of this path node.
+	/// </summary>
+	public PathNode owner;
+
+	/// <summary>
+	/// The open list of surrounding path nodes
+	/// </summary>
+	public List<PathNode> openList;
+
+	public PathNode(Vector3 position, PathNode owner, int movementCost, Vector3 targetPosition)
+	{
+		this.position = position;
+
+		// Calculate costs
+		this.heuristicCost = (int)(Vector3.Distance (position, targetPosition)*10);
+		this.movementCost = movementCost;
+		this.completeCost = this.heuristicCost + this.movementCost;
+
+		// Set owner reference
+		this.owner = owner;
 	}
 }
