@@ -102,12 +102,12 @@ public class CubicPathfinding
 	private void FindPath (CubicPath path)
 	{
 		// List definitions
-		List<PathNode> closedList = new List<PathNode>();
+		Dictionary<Vector3, PathNode> openList = new Dictionary<Vector3, PathNode>();
 
 		// Start pathfinding
 		PathNode startNode = new PathNode(path.startPos, null, 0, path.goalPos);
+		startNode.owner=startNode;
 		PathNode currentNode = startNode;
-		closedList.Add (startNode);
 		
 		bool pathFound = false;
 		bool noPath = false;
@@ -124,7 +124,15 @@ public class CubicPathfinding
 				// Left
 				currentNode.position + Vector3.left,
 				// Right
-				currentNode.position + Vector3.right
+				currentNode.position + Vector3.right,
+				// Front right
+				currentNode.position + Vector3.forward + Vector3.right,
+				// Front left
+				currentNode.position + Vector3.forward + Vector3.left,
+				// Back right
+				currentNode.position + Vector3.back + Vector3.right,
+				// Back left
+				currentNode.position + Vector3.back + Vector3.left
 			};
 
 			// Analyze surrounding path nodes
@@ -141,7 +149,16 @@ public class CubicPathfinding
 				if (!this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y, (int)positions[i].z))
 				{
 					// Add node to the nodes-array
-					nodes[i] = new PathNode(positions[i], currentNode, movementCost+currentMovementCost, path.goalPos);
+					if (openList.ContainsKey(positions[i]))
+					{
+						nodes[i]=openList[positions[i]];
+					}
+					else
+					{
+						nodes[i] = new PathNode(positions[i], currentNode, movementCost+currentMovementCost, path.goalPos);
+						openList.Add (positions[i], nodes[i]);
+					}
+
 				}
 
 				// Check for lowest cost
@@ -162,7 +179,13 @@ public class CubicPathfinding
 				pathFound=true;
 
 			// Put the lowest cost node on the closed list
-			closedList.Add (lowestCostNode);
+			if (currentNode.owner.position == lowestCostNode.owner.position)
+			{
+				currentNode.owner.nextNode=lowestCostNode;
+			}
+			else
+				currentNode.nextNode = lowestCostNode;
+
 			currentNode = lowestCostNode;
 		}
 
@@ -175,13 +198,15 @@ public class CubicPathfinding
 		else
 		{
 			// :^)
-			Vector3[] pathData = new Vector3[closedList.Count];
-			for (int i = 0; i < closedList.Count; i++)
+			List<Vector3> pathData = new List<Vector3>();
+			PathNode cNode = startNode;
+			while (cNode != null)
 			{
-				pathData[i]=closedList[i].position;
+				pathData.Add (cNode.position);
+				cNode = cNode.nextNode;
 			}
 
-			path.SetPathData(pathData);
+			path.SetPathData(pathData.ToArray());
 		}
 	}
 }
@@ -219,10 +244,7 @@ public class PathNode
 	/// </summary>
 	public PathNode owner;
 
-	/// <summary>
-	/// The open list of surrounding path nodes
-	/// </summary>
-	public List<PathNode> openList;
+	public PathNode nextNode;
 
 	public PathNode(Vector3 position, PathNode owner, int movementCost, Vector3 targetPosition)
 	{

@@ -85,8 +85,12 @@ public class CubicTerrain : MonoBehaviour
 	/// </summary>
 	private Dictionary<ChunkTuple, ChunkGenerationJob> generationJobs;
 
+	/// <summary>
+	/// Copy of the transform position.
+	/// </summary>
+	private Vector3 transformPosition;
+
 	#region Helper functions and classes
-	
 	/// <summary>
 	/// Gets the chunk position for the given worldspace.
 	/// </summary>
@@ -96,8 +100,8 @@ public class CubicTerrain : MonoBehaviour
 	{
 		int x = 0;
 		int z = 0;
-		float xF = ((worldspace.x - this.transform.position.x) / this.chunkWidth);
-		float zF = ((worldspace.z - this.transform.position.z) / this.chunkDepth);
+		float xF = ((worldspace.x - this.transformPosition.x) / this.chunkWidth);
+		float zF = ((worldspace.z - this.transformPosition.z) / this.chunkDepth);
 		
 		if (x < 0)
 			x = Mathf.CeilToInt(xF);
@@ -179,6 +183,7 @@ public class CubicTerrain : MonoBehaviour
 
 		Vector3 chunkPosition = this.GetChunkPosition(this.playerTransform.position);
 		this.GenerateChunk((int)chunkPosition.x,(int)chunkPosition.z);
+		this.transformPosition = this.transform.position;
 	}
 
 	/// <summary>
@@ -349,14 +354,13 @@ public class CubicTerrain : MonoBehaviour
 	public CubicTerrainData.VoxelData GetBlock(int x, int y, int z)
 	{
 		// Calculate chunk position for calculating relative position
-		int chunkX = Mathf.FloorToInt (x / this.chunkWidth);
-		int chunkZ = Mathf.FloorToInt (z / this.chunkDepth);
+		Vector3 chunk = this.GetChunkPosition(new Vector3(x,y,z));
 		
 		// Calculate relative position
-		x -= chunkX * this.chunkWidth;
-		z -= chunkZ * this.chunkDepth;
+		x -= (int)(chunk.x * this.chunkWidth);
+		z -= (int)(chunk.z * this.chunkDepth);
 		
-		return this.chunkData[new ChunkTuple(chunkX, chunkZ)].GetVoxel(x,y,z);
+		return this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].GetVoxel(x,y,z);
 	}
 	
 	/// <summary>
@@ -368,14 +372,13 @@ public class CubicTerrain : MonoBehaviour
 	public void SetBlock(int x, int y, int z, short blockId)
 	{
 		// Calculate chunk position for calculating relative position
-		int chunkX = Mathf.FloorToInt (x / this.chunkWidth);
-		int chunkZ = Mathf.FloorToInt (z / this.chunkDepth);
+		Vector3 chunk = this.GetChunkPosition(new Vector3(x,y,z));
 		
 		// Calculate relative position
-		x -= chunkX * this.chunkWidth;
-		z -= chunkZ * this.chunkDepth;
+		x -= (int)(chunk.x * this.chunkWidth);
+		z -= (int)(chunk.z * this.chunkDepth);
 		
-		this.chunkData[new ChunkTuple(chunkX, chunkZ)].SetVoxel(x,y,z,blockId);
+		this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].SetVoxel(x,y,z,blockId);
 	}
 
 	/// <summary>
@@ -389,14 +392,13 @@ public class CubicTerrain : MonoBehaviour
 	public bool HasBlock(int x, int y, int z)
 	{
 		// Calculate chunk position for calculating relative position
-		int chunkX = Mathf.FloorToInt (x / this.chunkWidth);
-		int chunkZ = Mathf.FloorToInt (z / this.chunkDepth);
+		Vector3 chunk = this.GetChunkPosition(new Vector3(x,y,z));
 		
 		// Calculate relative position
-		x -= chunkX * this.chunkWidth;
-		z -= chunkZ * this.chunkDepth;
+		x -= (int)(chunk.x * this.chunkWidth);
+		z -= (int)(chunk.z * this.chunkDepth);
 		
-		return this.chunkData[new ChunkTuple(chunkX, chunkZ)].HasVoxel(x,y,z);
+		return this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].HasVoxel(x,y,z);
 	}
 
 	/// <summary>
