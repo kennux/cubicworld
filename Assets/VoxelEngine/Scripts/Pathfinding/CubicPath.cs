@@ -9,6 +9,11 @@ public class CubicPath
 {
 	public Vector3 startPos;
 	public Vector3 goalPos;
+
+	/// <summary>
+	/// If this is set to true the pathfinder will only search in block positions where a block is under it.
+	/// </summary>
+	public bool needsGround;
 	
 	/// <summary>
 	/// Gets a value indicating whether this <see cref="CubicPath"/> is ready.

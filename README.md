@@ -14,12 +14,16 @@ Current Features
 * Infinite random terrain
 * Chunk serialization and deserialization (for saving chunk data)
 
-Planned Features
+Currently in Progress
 ===========
 * A*-Pathfinding
+* Custom Physics / Collision system
+* End-user documentation
+
+Planned Features
+===========
 * Fluid simulation
 * Unity networking integration
-* Custom Physics / Collision system
 
 Documentation
 ===========
