@@ -133,7 +133,7 @@ public class PathfindingExample : MonoBehaviour
 
 			// Start pathfinding
 			CubicPathfinding pathfinder = CubicPathfinding.GetInstance();
-			this.path = pathfinder.GetPath(startPoint, goalPoint);
+			this.path = pathfinder.GetPath(startPoint, goalPoint, true);
 
 			startPoint = Vector3.zero;
 			goalPoint = Vector3.zero;

@@ -53,9 +53,11 @@ public class CubicPathfinding
 	/// <returns>The path.</returns>
 	/// <param name="startingPos">Starting position.</param>
 	/// <param name="goalPos">Goal position.</param>
-	public CubicPath GetPath(Vector3 startingPos, Vector3 goalPos)
+	/// <param name="needsGround"><see cref="CubicPath.needsGround"/></param> 
+	public CubicPath GetPath(Vector3 startingPos, Vector3 goalPos, bool needsGround = false)
 	{
 		CubicPath pathObject = new CubicPath (startingPos, goalPos);
+		pathObject.needsGround = needsGround;
 
 		// Enqueue path
 		lock (this.pathQueueLock)
@@ -146,7 +148,9 @@ public class CubicPathfinding
 				int currentMovementCost = (int)(Vector3.Distance(positions[i], currentNode.position)*10);
 
 				// Check if this node is walkable
-				if (!this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y, (int)positions[i].z))
+				if (!this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y, (int)positions[i].z) && 
+				    // Walkable check
+				    (!path.needsGround || this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y-1, (int)positions[i].z)))
 				{
 					// Add node to the nodes-array
 					if (openList.ContainsKey(positions[i]))
