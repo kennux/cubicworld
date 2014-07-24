@@ -105,6 +105,7 @@ public class CubicPathfinding
 	{
 		// List definitions
 		Dictionary<Vector3, PathNode> openList = new Dictionary<Vector3, PathNode>();
+		List<Vector3> closedList = new List<Vector3> ();
 
 		// Start pathfinding
 		PathNode startNode = new PathNode(path.startPos, null, 0, path.goalPos);
@@ -170,7 +171,7 @@ public class CubicPathfinding
 					int currentMovementCost = (int)(Vector3.Distance(positions[i], currentNode.position)*10);
 
 					// Check if this node is walkable
-					if (!this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y, (int)positions[i].z) && 
+					if (!closedList.Contains(positions[i]) && !this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y, (int)positions[i].z) && 
 					    // Walkable check
 					    (!path.needsGround || this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y-1, (int)positions[i].z)))
 					{
@@ -211,7 +212,8 @@ public class CubicPathfinding
 				}
 				else
 					currentNode.nextNode = lowestCostNode;
-
+				
+				closedList.Add (currentNode.position);
 				currentNode = lowestCostNode;
 			}
 		}
@@ -231,6 +233,9 @@ public class CubicPathfinding
 		else
 		{
 			// :^)
+			// This is needed because in the closedlist there can be movements which are like
+			// front, right
+			// this should be done in one step frontright and this gets achieved by generating an array from the path node's linked list.
 			List<Vector3> pathData = new List<Vector3>();
 			PathNode cNode = startNode;
 			while (cNode != null)

@@ -316,8 +316,13 @@ public class CubicTerrainChunk : MonoBehaviour
 							Destroy (g);
 					}
 					this.newMeshData = null;
-					this.meshGenerationThread.Abort();
-					this.meshGenerationThread = null;
+
+					// Kill thread if alive
+					if (this.meshGenerationThread != null)
+					{
+						this.meshGenerationThread.Abort();
+						this.meshGenerationThread = null;
+					}
 					
 					lastUpdateFrame = Time.frameCount;
 				}

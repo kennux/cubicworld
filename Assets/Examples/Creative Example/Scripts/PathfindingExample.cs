@@ -24,14 +24,21 @@ public class PathfindingExample : MonoBehaviour
 		bool lastPoint = Input.GetKeyDown (KeyCode.L);
 		bool definePoint = firstPoint || lastPoint;
 
-		if (this.path != null && this.path.isReady)
+		if (this.path != null)
 		{
-			Debug.Log ("Path found in " + path.runtime + " milliseconds!");
-			foreach (Vector3 blockPos in this.path.pathData)
+			if (this.path.isReady)
 			{
-				CubicTerrain.GetInstance().SetBlock((int)blockPos.x, (int)blockPos.y-1, (int)blockPos.z, -1);
+				Debug.Log ("Path found in " + path.runtime + " milliseconds!");
+				foreach (Vector3 blockPos in this.path.pathData)
+				{
+					CubicTerrain.GetInstance().SetBlock((int)blockPos.x, (int)blockPos.y-1, (int)blockPos.z, -1);
+				}
+				this.path = null;
 			}
-			this.path = null;
+			else if (!this.path.foundPath)
+			{
+				Debug.Log ("Path not found :-( after search for " + path.runtime + " milliseconds!");
+			}
 		}
 
 		// Right mouse button.
