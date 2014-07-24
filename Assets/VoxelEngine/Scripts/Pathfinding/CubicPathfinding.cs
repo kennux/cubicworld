@@ -114,84 +114,113 @@ public class CubicPathfinding
 		bool pathFound = false;
 		bool noPath = false;
 		int movementCost = 0;
-		while (!pathFound && !noPath)
+
+		// Measure time
+		System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch ();
+		stopWatch.Start ();
+		try
 		{
-			// Calculate block direction positions
-			Vector3[] positions = new Vector3[]
+			while (!pathFound && !noPath)
 			{
-				// Front
-				currentNode.position + Vector3.forward,
-				// Back
-				currentNode.position + Vector3.back,
-				// Left
-				currentNode.position + Vector3.left,
-				// Right
-				currentNode.position + Vector3.right,
-				// Front right
-				currentNode.position + Vector3.forward + Vector3.right,
-				// Front left
-				currentNode.position + Vector3.forward + Vector3.left,
-				// Back right
-				currentNode.position + Vector3.back + Vector3.right,
-				// Back left
-				currentNode.position + Vector3.back + Vector3.left
-			};
-
-			// Analyze surrounding path nodes
-			PathNode[] nodes = new PathNode[positions.Length];
-			PathNode lowestCostNode = null;
-
-			// Check which ones are walkable and add them to the nodes-array
-			for (int i = 0; i < positions.Length; i++)
-			{
-				// Movement cost from this to the surrounding block
-				int currentMovementCost = (int)(Vector3.Distance(positions[i], currentNode.position)*10);
-
-				// Check if this node is walkable
-				if (!this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y, (int)positions[i].z) && 
-				    // Walkable check
-				    (!path.needsGround || this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y-1, (int)positions[i].z)))
+				// Calculate block direction positions
+				Vector3[] positions = new Vector3[]
 				{
-					// Add node to the nodes-array
-					if (openList.ContainsKey(positions[i]))
+					// Front
+					currentNode.position + Vector3.forward,
+					// Back
+					currentNode.position + Vector3.back,
+					// Left
+					currentNode.position + Vector3.left,
+					// Right
+					currentNode.position + Vector3.right,
+					// Front right
+					currentNode.position + Vector3.forward + Vector3.right,
+					// Front left
+					currentNode.position + Vector3.forward + Vector3.left,
+					// Back right
+					currentNode.position + Vector3.back + Vector3.right,
+					// Back left
+					currentNode.position + Vector3.back + Vector3.left,
+					// Up Front
+					currentNode.position + Vector3.forward + Vector3.up,
+					// Up Back
+					currentNode.position + Vector3.back + Vector3.up,
+					// Up Left
+					currentNode.position + Vector3.left + Vector3.up,
+					// Up Right
+					currentNode.position + Vector3.right + Vector3.up,
+					// Down Front
+					currentNode.position + Vector3.forward + Vector3.down,
+					// Down Back
+					currentNode.position + Vector3.back + Vector3.down,
+					// Down Left
+					currentNode.position + Vector3.left + Vector3.down,
+					// Down Right
+					currentNode.position + Vector3.right + Vector3.down,
+				};
+
+				// Analyze surrounding path nodes
+				PathNode[] nodes = new PathNode[positions.Length];
+				PathNode lowestCostNode = null;
+
+				// Check which ones are walkable and add them to the nodes-array
+				for (int i = 0; i < positions.Length; i++)
+				{
+					// Movement cost from this to the surrounding block
+					int currentMovementCost = (int)(Vector3.Distance(positions[i], currentNode.position)*10);
+
+					// Check if this node is walkable
+					if (!this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y, (int)positions[i].z) && 
+					    // Walkable check
+					    (!path.needsGround || this.terrain.HasBlock((int)positions[i].x, (int)positions[i].y-1, (int)positions[i].z)))
 					{
-						nodes[i]=openList[positions[i]];
-					}
-					else
-					{
-						nodes[i] = new PathNode(positions[i], currentNode, movementCost+currentMovementCost, path.goalPos);
-						openList.Add (positions[i], nodes[i]);
+						// Add node to the nodes-array
+						if (openList.ContainsKey(positions[i]))
+						{
+							nodes[i]=openList[positions[i]];
+						}
+						else
+						{
+							nodes[i] = new PathNode(positions[i], currentNode, movementCost+currentMovementCost, path.goalPos);
+							openList.Add (positions[i], nodes[i]);
+						}
+
 					}
 
+					// Check for lowest cost
+					if (nodes[i] != null && (lowestCostNode == null || nodes[i].completeCost < lowestCostNode.completeCost))
+					{
+						lowestCostNode = nodes[i];
+					}
 				}
 
-				// Check for lowest cost
-				if (nodes[i] != null && (lowestCostNode == null || nodes[i].completeCost < lowestCostNode.completeCost))
+				// Failed? o_O
+				if (lowestCostNode == null)
 				{
-					lowestCostNode = nodes[i];
+					noPath = true;
+					break;
 				}
+
+				if (currentNode.position == path.goalPos)
+					pathFound=true;
+
+				// Put the lowest cost node on the closed list
+				if (currentNode.owner.position == lowestCostNode.owner.position)
+				{
+					currentNode.owner.nextNode=lowestCostNode;
+				}
+				else
+					currentNode.nextNode = lowestCostNode;
+
+				currentNode = lowestCostNode;
 			}
-
-			// Failed? o_O
-			if (lowestCostNode == null)
-			{
-				noPath = true;
-				break;
-			}
-
-			if (currentNode.position == path.goalPos)
-				pathFound=true;
-
-			// Put the lowest cost node on the closed list
-			if (currentNode.owner.position == lowestCostNode.owner.position)
-			{
-				currentNode.owner.nextNode=lowestCostNode;
-			}
-			else
-				currentNode.nextNode = lowestCostNode;
-
-			currentNode = lowestCostNode;
 		}
+		catch (System.Exception exception)
+		{
+			// :(
+			noPath=true;
+		}
+		stopWatch.Stop ();
 
 		// No path found?
 		if (noPath)
@@ -212,6 +241,9 @@ public class CubicPathfinding
 
 			path.SetPathData(pathData.ToArray());
 		}
+
+		// Set runtime
+		path.runtime = (float)stopWatch.Elapsed.TotalMilliseconds;
 	}
 }
 

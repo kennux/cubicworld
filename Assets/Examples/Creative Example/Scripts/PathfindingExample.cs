@@ -26,7 +26,7 @@ public class PathfindingExample : MonoBehaviour
 
 		if (this.path != null && this.path.isReady)
 		{
-			Debug.Log ("Path found!");
+			Debug.Log ("Path found in " + path.runtime + " milliseconds!");
 			foreach (Vector3 blockPos in this.path.pathData)
 			{
 				CubicTerrain.GetInstance().SetBlock((int)blockPos.x, (int)blockPos.y-1, (int)blockPos.z, -1);
@@ -129,7 +129,7 @@ public class PathfindingExample : MonoBehaviour
 
 		if (startPoint != Vector3.zero && goalPoint != Vector3.zero)
 		{
-			Debug.Log ("Starting A* path finding");
+			Debug.Log ("Starting A* path finding. Distance: " + Vector3.Distance(startPoint, goalPoint));
 
 			// Start pathfinding
 			CubicPathfinding pathfinder = CubicPathfinding.GetInstance();

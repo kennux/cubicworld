@@ -90,6 +90,8 @@ public class CubicTerrain : MonoBehaviour
 	/// </summary>
 	private Vector3 transformPosition;
 
+	public bool debugGenerateTerrain = true;
+
 	#region Helper functions and classes
 	/// <summary>
 	/// Gets the chunk position for the given worldspace.
@@ -192,6 +194,9 @@ public class CubicTerrain : MonoBehaviour
 	/// </summary>
 	public void Update()
 	{
+		if (!this.debugGenerateTerrain)
+			return;
+
 		// Load needed chunks
 		Vector3 chunkPosition = this.GetChunkPosition(this.playerTransform.position);
 
@@ -219,6 +224,9 @@ public class CubicTerrain : MonoBehaviour
 	/// <param name="z">The z coordinate.</param>
 	private void GenerateChunk(int x, int z)
 	{
+		if (this.generationJobs.ContainsKey (new ChunkTuple (x, z)) || this.chunkData.ContainsKey(new ChunkTuple (x, z)))
+			return;
+
 		// Create gameobject
 		Vector3 chunkPosition = this.transform.position + new Vector3
 		(
@@ -266,8 +274,6 @@ public class CubicTerrain : MonoBehaviour
 						}
 						this.chunkData.Add (job.Key, job.Value.terrainChunkData);
 						job.Value.done = true;
-
-
 					}
 				}
 			}

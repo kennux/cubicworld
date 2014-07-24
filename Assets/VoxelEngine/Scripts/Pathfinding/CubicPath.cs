@@ -11,6 +11,11 @@ public class CubicPath
 	public Vector3 goalPos;
 
 	/// <summary>
+	/// The runtime in milliseconds.
+	/// </summary>
+	public float runtime;
+
+	/// <summary>
 	/// If this is set to true the pathfinder will only search in block positions where a block is under it.
 	/// </summary>
 	public bool needsGround;

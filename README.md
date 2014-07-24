@@ -13,10 +13,10 @@ Current Features
 * Unity physics integration (There will be a custom physics system in the future available)
 * Infinite random terrain
 * Chunk serialization and deserialization (for saving chunk data)
+* A*-Pathfinding
 
 Currently in Progress
 ===========
-* A*-Pathfinding
 * Custom Physics / Collision system
 * End-user documentation
 
