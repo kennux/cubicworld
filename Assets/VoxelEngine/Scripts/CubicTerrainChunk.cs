@@ -5,7 +5,7 @@ using System.Threading;
 using System.Linq;
 
 /// <summary>
-/// Block hit info structure. Gets built from raycast hits in the CubicTerrainChunk.
+/// Block hit info structure. Gets built from raycast hits in the .
 /// </summary>
 public struct BlockHitInfo
 {
@@ -640,5 +640,22 @@ public class CubicTerrainChunk : MonoBehaviour
 			relativePosition.y,
 			this.chunkPosition.z * this.master.chunkDepth + relativePosition.z
 		);
+	}
+
+	/// <summary>
+	/// Raises the destroy event.
+	/// Frees memory for procedurally generated resources.
+	/// </summary>
+	public void OnDestroy()
+	{
+		// Free memory for all child meshes
+		foreach (Transform t in this.transform)
+		{
+			Destroy (t.gameObject.GetComponent<MeshFilter> ().sharedMesh);
+			MeshCollider c = t.gameObject.GetComponent<MeshCollider> ();
+
+			if (c != null)
+				Destroy (c.sharedMesh);
+		}
 	}
 }

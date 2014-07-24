@@ -16,7 +16,7 @@ public class TestGenerator : ATerrainGenerator
 
 	private System.Random rand;
 	
-	public override void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace)
+	protected override void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace)
 	{
 		Simplex.remixPermutation (System.DateTime.Now.Millisecond * System.DateTime.Now.Second);
 		for (int x = 0; x < terrainDataObject.width; x++)

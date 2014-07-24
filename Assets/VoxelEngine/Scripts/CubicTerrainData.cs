@@ -144,6 +144,9 @@ public class CubicTerrainData
 	/// <param name="z">The z coordinate.</param>
 	public VoxelData GetVoxel (int x, int y, int z)
 	{
+		if (x < 0 || x >= this.width || y < 0 || y >= this.height || z < 0 || z >= this.depth)
+			return null;
+
 		lock (this.voxelDataLockObject)
 		{
 			return this.voxelData[x][y][z];

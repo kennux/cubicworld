@@ -10,7 +10,7 @@ public class PerlinGenerator3D : ATerrainGenerator
 	private const int dirtId = 2;
 	private const int stoneId = 3;
 	
-	public override void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace)
+	protected override void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace)
 	{
 		for (int x = 0; x < terrainDataObject.width; x++)
 		{

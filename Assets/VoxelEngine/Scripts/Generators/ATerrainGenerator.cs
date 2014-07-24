@@ -8,10 +8,19 @@ using System.Collections;
 /// </summary>
 public abstract class ATerrainGenerator : MonoBehaviour
 {
+	public void GenerateChunk(CubicTerrainData terrainDataObject, Vector3 worldspace)
+	{
+		System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch ();
+		stopWatch.Start ();
+		this.GenerateTerrainData (terrainDataObject, worldspace);
+		stopWatch.Stop ();
+		Debug.Log ("Generating chunk at " + worldspace + " took " + stopWatch.Elapsed.TotalMilliseconds + "ms");
+	}
+
 	/// <summary>
 	/// Generates the terrain data.
 	/// Generate your world inside here!
 	/// </summary>
 	/// <param name="terrainDataObject">Terrain data object.</param>
-	public abstract void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace);
+	protected abstract void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace);
 }

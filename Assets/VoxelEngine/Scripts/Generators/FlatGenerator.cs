@@ -3,7 +3,7 @@ using System.Collections;
 
 public class FlatGenerator : ATerrainGenerator
 {
-	public override void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace)
+	protected override void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace)
 	{
 		for (int x = 0; x < terrainDataObject.width; x++)
 		{

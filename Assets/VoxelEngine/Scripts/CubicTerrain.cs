@@ -241,11 +241,11 @@ public class CubicTerrain : MonoBehaviour
 		chunkObject.layer = this.gameObject.layer;
 
 		CubicTerrainChunk terrainChunk = chunkObject.AddComponent<CubicTerrainChunk> ();
-		this.chunkObjects.Add (new ChunkTuple (x, z), chunkObject);
 		terrainChunk.chunkPosition = new Vector3 (x, 0, z);
 
 		lock (this.generationLockObject)
 		{
+			this.chunkObjects.Add (new ChunkTuple (x, z), chunkObject);
 			this.generationJobs.Add (new ChunkTuple(x,z), new ChunkGenerationJob(new CubicTerrainData(this.chunkWidth, this.chunkHeight, this.chunkDepth), chunkPosition));
 		}
 	}
@@ -270,7 +270,7 @@ public class CubicTerrain : MonoBehaviour
 						}
 						else
 						{
-							this.terrainGenerator.GenerateTerrainData(job.Value.terrainChunkData, job.Value.worldspace);
+							this.terrainGenerator.GenerateChunk(job.Value.terrainChunkData, job.Value.worldspace);
 						}
 						this.chunkData.Add (job.Key, job.Value.terrainChunkData);
 						job.Value.done = true;
@@ -295,13 +295,17 @@ public class CubicTerrain : MonoBehaviour
 			{
 				if (job.Value.done)
 				{
-					// Set chunk data
-					CubicTerrainChunk chunk = this.chunkObjects[job.Key].GetComponent<CubicTerrainChunk>();
-					chunk.master=this;
-					chunk.chunkData = job.Value.terrainChunkData;
+					// Check if chunk object is in the chunk objects list
+					if (this.chunkObjects.ContainsKey(job.Key))
+					{
+						// Set chunk data
+						CubicTerrainChunk chunk = this.chunkObjects[job.Key].GetComponent<CubicTerrainChunk>();
+						chunk.master=this;
+						chunk.chunkData = job.Value.terrainChunkData;
 
-					// Mark job for removal
-					jobsToDelete.Add (job.Key);
+						// Mark job for removal
+						jobsToDelete.Add (job.Key);
+					}
 				}
 			}
 
