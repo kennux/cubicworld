@@ -163,6 +163,9 @@ public class CubicTerrainData
 	/// <param name="z">The z coordinate.</param>
 	public bool HasVoxel(int x, int y, int z)
 	{
+		if (y >= this.height || x < 0 || x >= this.width || z < 0 || z >= this.depth)
+			return false;
+
 		lock (this.voxelDataLockObject)
 		{
 			return this.voxelData [x] [y] [z] != null && this.voxelData [x] [y] [z].blockId >= 0;

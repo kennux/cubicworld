@@ -13,9 +13,7 @@ public class CubicTerrainCollider : ACubicTerrainCollider
 
 	public override bool CheckCollision (ACubicTerrainCollider otherCollider, ref CubicTerrainHitInfo hitInfo)
 	{
-		if (otherCollider.GetType().IsSubclassOf(typeof(ACubicTerrainCollider)))
-		{
-		}
+
 		return false;
 	}
 }

@@ -5,7 +5,7 @@ using System.Threading;
 using System.Linq;
 
 /// <summary>
-/// Block hit info structure. Gets built from raycast hits in the .
+/// Block hit info structure. Gets built from raycast hit infos.
 /// </summary>
 public struct BlockHitInfo
 {
@@ -529,6 +529,8 @@ public class CubicTerrainChunk : MonoBehaviour
 		uvs.AddRange (uv);
 	}
 
+	#region Unity Physics helper functions
+
 	/// <summary>
 	/// TODO: Find a correct name for this. lol.
 	/// 
@@ -563,12 +565,12 @@ public class CubicTerrainChunk : MonoBehaviour
 	{
 		// Get the hit towards block
 		Vector3 towardsBlockHit = this.GetBlockPosition(hitInfo, 0.5f);
-
+		
 		// Get the hit block
 		Vector3 hitBlock = this.GetBlockPosition(hitInfo, -0.5f);
-
+		
 		BlockFace f = new BlockFace();
-
+		
 		// Determine which face was clicked
 		if (towardsBlockHit.x > hitBlock.x)
 		{
@@ -594,14 +596,16 @@ public class CubicTerrainChunk : MonoBehaviour
 		{
 			f = BlockFace.BACK;
 		}
-
+		
 		// Build the hitinfo
 		BlockHitInfo blockHitInfo = new BlockHitInfo ();
 		blockHitInfo.hitBlock = hitBlock;
 		blockHitInfo.hitFace = f;
-
+		
 		return blockHitInfo;
 	}
+
+	#endregion
 
 	/// <summary>
 	/// Transforms the given facing of the block at the given position.

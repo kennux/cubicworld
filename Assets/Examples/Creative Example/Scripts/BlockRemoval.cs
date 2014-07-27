@@ -23,32 +23,48 @@ public class BlockRemoval : MonoBehaviour
 		// Right mouse button.
 		if (Input.GetMouseButtonDown(1))
 		{
-			// Get ready to perform the raycast.
-			RaycastHit hitInfo = new RaycastHit();
-			Ray cameraRay = this.playerCamera.camera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
-			Debug.DrawRay(cameraRay.origin, cameraRay.direction, Color.red, 100.0f);
+			// The unity physics way
 
-			// Perform the raycast
-			if (Physics.Raycast(cameraRay, out hitInfo, 50, this.detectionMask.value))
+			if (CubicTerrain.GetInstance().useMeshColliders)
 			{
-				if (hitInfo.collider == null)
-					return;
+				// Get ready to perform the raycast.
+				RaycastHit hitInfo = new RaycastHit();
+				Ray cameraRay = this.playerCamera.camera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
+				Debug.DrawRay(cameraRay.origin, cameraRay.direction, Color.red, 100.0f);
 
-				// get collider parent
-				Transform chunkTransform = hitInfo.collider.transform.parent;
-
-				if (chunkTransform != null)
+				// Perform the raycast
+				if (Physics.Raycast(cameraRay, out hitInfo, 50, this.detectionMask.value))
 				{
-					// Chunk hit?
-					CubicTerrainChunk chunk = chunkTransform.GetComponent<CubicTerrainChunk>();
-					if (chunk != null && !chunk.isDirty)
-					{
-						// Yes, chunk hit!
-						// Delete the clicked block
-						Vector3 block = chunk.GetBlockPosition(hitInfo, -0.5f);
+					if (hitInfo.collider == null)
+						return;
 
-						chunk.chunkData.SetVoxel((int)block.x, (int) block.y, (int) block.z, -1);
+					// get collider parent
+					Transform chunkTransform = hitInfo.collider.transform.parent;
+
+					if (chunkTransform != null)
+					{
+						// Chunk hit?
+						CubicTerrainChunk chunk = chunkTransform.GetComponent<CubicTerrainChunk>();
+						if (chunk != null && !chunk.isDirty)
+						{
+							// Yes, chunk hit!
+							// Delete the clicked block
+							Vector3 block = chunk.GetBlockPosition(hitInfo, -0.5f);
+
+							chunk.chunkData.SetVoxel((int)block.x, (int) block.y, (int) block.z, -1);
+						}
 					}
+				}
+			}
+			else
+			{
+				// Cubic World Physics way
+				CubicRaycastHitInfo hitInfo = new CubicRaycastHitInfo();
+				if (CubicPhysics.TerrainRaycastUnprecise(this.playerCamera.camera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2)), 5.0f, out hitInfo))
+				{
+					// Debug.Log ("Hit: " + hitInfo.hitPoint + ", Block: " + hitInfo.blockHit + ", Face: " + hitInfo.faceHit);
+					// Hit block
+					CubicTerrain.GetInstance().SetBlock((int)hitInfo.blockHit.x, (int)hitInfo.blockHit.y, (int)hitInfo.blockHit.z, -1);
 				}
 			}
 		}

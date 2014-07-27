@@ -10,54 +10,60 @@ using System.Collections.Generic;
 public class CubicTerrainPhysicsSystem : MonoBehaviour
 {
 	/// <summary>
+	/// The instance of the physics system.
+	/// </summary>
+	private static CubicTerrainPhysicsSystem instance;
+
+	/// <summary>
+	/// Gets the instance of the physics system which will get set in Awake().
+	/// </summary>
+	/// <returns>The instance.</returns>
+	public static CubicTerrainPhysicsSystem GetInstance()
+	{
+		return instance;
+	}
+
+	/// <summary>
 	/// The colliders list.
-	/// These colliders are update in FixedUpdate()
 	/// </summary>
-	private static List<ACubicTerrainCollider> colliders;
-
-	private static bool alreadyInitialized = false;
+	private List<ACubicTerrainCollider> colliders;
 
 	/// <summary>
-	/// Initialize this instance.
+	/// Awakes this instance.
+	/// Initializes the singleton pattern.
 	/// </summary>
-	private static void Initialize()
+	public void Awake()
 	{
-		if (colliders == null)
-			colliders = new List<ACubicTerrainCollider> ();
-	}
-
-	/// <summary>
-	/// Adds the collider to the colliders list.
-	/// </summary>
-	/// <param name="collider">Collider.</param>
-	public static void AddCollider(ACubicTerrainCollider collider)
-	{
-		Initialize ();
-	}
-
-	/// <summary>
-	/// Start this instance.
-	/// Initializes the physics system instance.
-	/// </summary>
-	public void Start()
-	{
-		// Check if already initialized
-		if (alreadyInitialized)
+		this.colliders = new List<ACubicTerrainCollider> ();
+		if (instance != null)
 		{
-			Debug.LogError ("Not allowed to have 2 CubicTerrainPhysicSystems in the scene! Disabling myself...");
+			Debug.LogError ("Not allowed to have 2 CubicTerrainPhysicsSystem. Disabling this one...");
 			this.enabled = false;
-			return;
 		}
 
-		// Initialized
-		alreadyInitialized = true;
+		instance = this;
 	}
 
 	/// <summary>
-	/// Fixeds the update.
+	/// Does collision checks and forwards this messages:
+	/// 
+	/// - CubicCollision(CubicTerrainHitInfo hitInfo)
 	/// </summary>
 	public void FixedUpdate()
 	{
+		// Check any collider against any collider
+		for (int i = 0; i < this.colliders.Count; i++)
+		{
+			for (int j = 0; j < this.colliders.Count; j++)
+			{
+				// Actually check collisions
+				CubicTerrainHitInfo hitInfo = new CubicTerrainHitInfo();
 
+				if (this.colliders[i].CheckCollision(this.colliders[j], ref hitInfo))
+				{
+					this.colliders[i].gameObject.SendMessage("CubicCollision", hitInfo, SendMessageOptions.DontRequireReceiver);
+				}
+			}
+		}
 	}
 }

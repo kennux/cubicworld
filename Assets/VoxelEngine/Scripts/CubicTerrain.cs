@@ -123,6 +123,43 @@ public class CubicTerrain : MonoBehaviour
 		);
 	}
 
+	/// <summary>
+	/// Gets the block position for the given worldspace.
+	/// </summary>
+	/// <returns>The block position.</returns>
+	/// <param name="worldspace">Worldspace.</param>
+	public Vector3 GetBlockPosition(Vector3 worldspace)
+	{
+		int x = 0;
+		int y = 0;
+		int z = 0;
+		float xF = (worldspace.x - this.transformPosition.x);
+		float yF = (worldspace.y - this.transformPosition.y);
+		float zF = (worldspace.z - this.transformPosition.z);
+
+		if (x < 0)
+			x = Mathf.CeilToInt(xF);
+		else
+			x = Mathf.FloorToInt(xF);
+		
+		if (y < 0)
+			y = Mathf.CeilToInt(yF);
+		else
+			y = Mathf.FloorToInt(yF);
+
+		if (z < 0)
+			z = Mathf.CeilToInt(zF);
+		else
+			z = Mathf.FloorToInt(zF);
+		
+		return new Vector3
+		(
+			x,
+			y,
+			z
+		);
+	}
+
 	// Chunk generation job
 	// This class holds information which gets used in the generation thread for generating chunks.
 	class ChunkGenerationJob
@@ -154,6 +191,9 @@ public class CubicTerrain : MonoBehaviour
 	/// </summary>
 	public void Start()
 	{
+		// Make sure we are at 0|0|0
+		this.transform.position = new Vector3 (0, 0, 0);
+
 		// Singleton
 		if (instance != null)
 		{
@@ -409,6 +449,17 @@ public class CubicTerrain : MonoBehaviour
 		z -= (int)(chunk.z * this.chunkDepth);
 		
 		return this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].HasVoxel(x,y,z);
+	}
+
+	/// <summary>
+	/// Determines whether this instance has block the specified blockPos.
+	/// <see cref="HasBlock(int,int,int)"/>
+	/// </summary>
+	/// <returns><c>true</c> if this instance has block the specified blockPos; otherwise, <c>false</c>.</returns>
+	/// <param name="blockPos">Block position.</param>
+	public bool HasBlock(Vector3 blockPos)
+	{
+		return this.HasBlock ((int)blockPos.x, (int)blockPos.y, (int)blockPos.z);
 	}
 
 	/// <summary>
