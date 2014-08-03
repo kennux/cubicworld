@@ -140,6 +140,7 @@ public class BlockAdder : MonoBehaviour
 
 					CubicTerrain.GetInstance().SetBlock(x,y,z,(short)this.blockId);
 				}
+
 			}
 		}
 	}

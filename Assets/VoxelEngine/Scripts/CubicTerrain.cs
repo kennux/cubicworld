@@ -401,6 +401,7 @@ public class CubicTerrain : MonoBehaviour
 	/// <param name="x">The x coordinate.</param>
 	/// <param name="y">The y coordinate.</param>
 	/// <param name="z">The z coordinate.</param>
+	/// <returns>The voxel data for the given coordinates, null in case of an error.</returns>
 	public CubicTerrainData.VoxelData GetBlock(int x, int y, int z)
 	{
 		// Calculate chunk position for calculating relative position
@@ -410,6 +411,9 @@ public class CubicTerrain : MonoBehaviour
 		x -= (int)(chunk.x * this.chunkWidth);
 		z -= (int)(chunk.z * this.chunkDepth);
 		
+		if (!this.chunkData.ContainsKey (new ChunkTuple ((int)chunk.x, (int)chunk.z)))
+			return null;
+
 		return this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].GetVoxel(x,y,z);
 	}
 	
@@ -428,7 +432,8 @@ public class CubicTerrain : MonoBehaviour
 		x -= (int)(chunk.x * this.chunkWidth);
 		z -= (int)(chunk.z * this.chunkDepth);
 		
-		this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].SetVoxel(x,y,z,blockId);
+		if (this.chunkData.ContainsKey (new ChunkTuple ((int)chunk.x, (int)chunk.z)))
+			this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].SetVoxel(x,y,z,blockId);
 	}
 
 	/// <summary>
@@ -447,7 +452,10 @@ public class CubicTerrain : MonoBehaviour
 		// Calculate relative position
 		x -= (int)(chunk.x * this.chunkWidth);
 		z -= (int)(chunk.z * this.chunkDepth);
-		
+
+		if (! this.chunkData.ContainsKey (new ChunkTuple ((int)chunk.x, (int)chunk.z)))
+			return false;
+
 		return this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].HasVoxel(x,y,z);
 	}
 
