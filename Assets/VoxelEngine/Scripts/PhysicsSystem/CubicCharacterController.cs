@@ -23,6 +23,11 @@ public class CubicCharacterController : MonoBehaviour
 
 	}
 
+	public void SimpleMove(Vector3 direction, float speed)
+	{
+		this.velocity += direction.normalized * speed;
+	}
+
 	public void FixedUpdate()
 	{
 		CubicTerrain terrainInstance = CubicTerrain.GetInstance ();
@@ -35,12 +40,14 @@ public class CubicCharacterController : MonoBehaviour
 		this.velocity += this.gravity * Time.deltaTime;
 
 		// Move based on velocity
-		newPosition += this.velocity;
+		newPosition += this.velocity * Time.deltaTime;
+		Vector3 realNewPosition = newPosition;
 
 		Vector3 blockSpaceNewPosition = terrainInstance.GetBlockPosition(newPosition);
 		bool newPositionValid = true;
 
 		blockSpaceNewPosition.y -= (float)this.characterHeight / 2.0f;
+		newPosition.y=blockSpaceNewPosition.y;
 
 		// New position valid?
 		for (int i = 0; i < this.characterHeight && newPositionValid; i++)
@@ -49,13 +56,36 @@ public class CubicCharacterController : MonoBehaviour
 			{
 				newPositionValid=false;
 			}
+
+			// Check left, right, front and back
+			Vector3[] checkPositions = new Vector3[]
+			{
+				Vector3.left * 0.5f,
+				Vector3.right * 0.5f,
+				Vector3.forward * 0.5f,
+				Vector3.back * 0.5f
+			};
+
+			// Check all directions
+			foreach (Vector3 checkPosition in checkPositions)
+			{
+				Vector3 checkPos = checkPosition + newPosition;
+
+				if (terrainInstance.HasBlock(terrainInstance.GetBlockPosition(checkPos)))
+				{
+					newPositionValid=false;
+				}
+			}
+
 			blockSpaceNewPosition.y++;
+			newPosition.y=blockSpaceNewPosition.y;
 		}
 
 		if (newPositionValid)
 		{
-			Debug.Log ("New position: " + newPosition);
-			this.transform.position = newPosition;
+			Debug.Log ("New position: " + realNewPosition);
+			this.transform.position = realNewPosition;
+			this.velocity -= this.velocity / 2;
 		}
 		else
 		{
