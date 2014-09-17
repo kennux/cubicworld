@@ -21,7 +21,7 @@ public class PerlinGenerator3D : ATerrainGenerator
 					// Get absolute positions for noise generation
 					float absX = (float) x + worldspace.x;
 					float absZ = (float) z + worldspace.z;
-					float absY = (float) y;
+					float absY = (float) y + worldspace.y;
 					
 					//float perlin = Mathf.PerlinNoise(absX * frequency, absZ * frequency);
 					//int toY = (int)(perlin * ((float)terrainDataObject.height-1));

@@ -5,6 +5,8 @@ using System.Threading;
 
 /// <summary>
 /// Cubic pathfinding implementation.
+/// 
+/// Uses the A*-Pathfinding algorithm to find it's path through the world.
 /// </summary>
 public class CubicPathfinding
 {

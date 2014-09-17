@@ -27,6 +27,11 @@ public class CubicTerrain : MonoBehaviour
 	public int chunkDepth=32;
 
 	/// <summary>
+	/// How much chunks on y-axis? aka worldheight = chunksOnYAxis * chunkHeight
+	/// </summary>
+	public int chunksOnYAxis=4;
+
+	/// <summary>
 	/// If set to true then the chunk where the player stands on will get loaded first.
 	/// </summary>
 	public bool loadPlayerChunkFirst = false;
@@ -47,6 +52,13 @@ public class CubicTerrain : MonoBehaviour
 	/// If smooth chunk loading is activated, lag will get prevented by not loading all chunks at once.
 	/// </summary>
 	public bool smoothChunkLoading;
+
+	/// <summary>
+	/// Determines the value of frames to wait after loading a chunk.
+	/// For example if this value is 5, every 5 frames a new chunk will get loaded.
+	/// This prevents lags on larger worlds.
+	/// </summary>
+	public int smoothingFrameDistancePerLoad = 5;
 
 	/// <summary>
 	/// If this is set to true chunks will get mesh colliders added to their game objects.
@@ -73,24 +85,22 @@ public class CubicTerrain : MonoBehaviour
 	/// <summary>
 	/// The chunk game objects.
 	/// </summary>
-	private Dictionary<ChunkTuple, GameObject> chunkObjects;
+	private List3D<GameObject> chunkObjects;
 
 	/// <summary>
 	/// The chunk data.
 	/// </summary>
-	private Dictionary<ChunkTuple, CubicTerrainData> chunkData;
+	private List3D<CubicTerrainData> chunkData;
 	
 	/// <summary>
 	/// The generation jobs.
 	/// </summary>
-	private Dictionary<ChunkTuple, ChunkGenerationJob> generationJobs;
+	private List3D<ChunkGenerationJob> generationJobs;
 
 	/// <summary>
 	/// Copy of the transform position.
 	/// </summary>
 	private Vector3 transformPosition;
-
-	public bool debugGenerateTerrain = true;
 
 	#region Helper functions and classes
 	/// <summary>
@@ -100,10 +110,10 @@ public class CubicTerrain : MonoBehaviour
 	/// <param name="worldspace">Worldspace.</param>
 	public Vector3 GetChunkPosition(Vector3 worldspace)
 	{
-		int x = 0;
-		int z = 0;
-		float xF = ((worldspace.x - this.transformPosition.x) / this.chunkWidth);
-		float zF = ((worldspace.z - this.transformPosition.z) / this.chunkDepth);
+		int x = (int)(worldspace.x + this.transformPosition.x);
+		int z = (int)(worldspace.x + this.transformPosition.x);
+		float xF = ((worldspace.x + this.transformPosition.x) / this.chunkWidth);
+		float zF = ((worldspace.z + this.transformPosition.z) / this.chunkDepth);
 		
 		if (x < 0)
 			x = Mathf.CeilToInt(xF);
@@ -118,7 +128,7 @@ public class CubicTerrain : MonoBehaviour
 		return new Vector3
 		(
 			x,
-			0,
+			Mathf.FloorToInt ((worldspace.y + this.transformPosition.y) / this.chunkHeight),
 			z
 		);
 	}
@@ -130,12 +140,12 @@ public class CubicTerrain : MonoBehaviour
 	/// <param name="worldspace">Worldspace.</param>
 	public Vector3 GetBlockPosition(Vector3 worldspace)
 	{
-		int x = 0;
-		int y = 0;
-		int z = 0;
-		float xF = (worldspace.x - this.transformPosition.x);
-		float yF = (worldspace.y - this.transformPosition.y);
-		float zF = (worldspace.z - this.transformPosition.z);
+		int x = (int)(worldspace.x + this.transformPosition.x);
+		int y = (int)(worldspace.y + this.transformPosition.y);
+		int z = (int)(worldspace.z + this.transformPosition.z);
+		float xF = (worldspace.x + this.transformPosition.x);
+		float yF = (worldspace.y + this.transformPosition.y);
+		float zF = (worldspace.z + this.transformPosition.z);
 
 		if (x < 0)
 			x = Mathf.CeilToInt(xF);
@@ -197,7 +207,7 @@ public class CubicTerrain : MonoBehaviour
 		// Singleton
 		if (instance != null)
 		{
-			Debug.LogError ("2 CubicTerrain Script GameObject detected! Error! Disabling this instance.");
+			Debug.LogError ("Multiple CubicTerrain Script GameObject detected! Error! Disabling this instance.");
 			this.enabled = false;
 			return;
 		}
@@ -207,14 +217,14 @@ public class CubicTerrain : MonoBehaviour
 		if (this.serializeTerrain)
 			this.terrainFile = new CubicTerrainFile(this.chunkFilesPath+"table.clt", this.chunkFilesPath+"data.cfd");
 
+		// Initialize lists
+		this.chunkObjects = new List3D<GameObject> ();
+		this.chunkData = new List3D<CubicTerrainData> ();
+		this.generationJobs = new List3D<ChunkGenerationJob> ();
+
 		this.terrainGenerator = this.GetComponent<ATerrainGenerator> ();
 		this.chunkGenerationThread = new Thread (this.ChunkGenerationThread);
 		this.chunkGenerationThread.Start ();
-
-		// Initialize dictionaries
-		this.chunkObjects = new Dictionary<ChunkTuple, GameObject> ();
-		this.chunkData = new Dictionary<ChunkTuple, CubicTerrainData> ();
-		this.generationJobs = new Dictionary<ChunkTuple, ChunkGenerationJob> ();
 
 		// Init
 		this.terrainMaterial.SetTexture ("_MainTex", Blocks.textureAtlas);
@@ -231,22 +241,22 @@ public class CubicTerrain : MonoBehaviour
 	/// <summary>
 	/// Update this instance.
 	/// Loads new chunk and deletes old chunks.
+	/// 
+	/// Chunk generation checks if the chunk is already existing / quened by checking if there is a chunk at x|0|z.
 	/// </summary>
 	public void Update()
 	{
-		if (!this.debugGenerateTerrain)
-			return;
-
 		// Load needed chunks
-		Vector3 chunkPosition = this.GetChunkPosition(this.playerTransform.position);
+		Vector3 playerPosition = this.playerTransform.position;
+		playerPosition.y = 0;
+		Vector3 chunkPosition = this.GetChunkPosition(playerPosition);
 
 		for (int x = (int)chunkPosition.x - this.chunkPreloadRadius; x <= (int)chunkPosition.x + this.chunkPreloadRadius; x++)
 		{
 			for (int z = (int)chunkPosition.z - this.chunkPreloadRadius; z <= (int)chunkPosition.z + this.chunkPreloadRadius; z++)
 			{
-				// TODO Do correct iteration!
-				if (Vector3.Distance(this.GetChunkPosition(this.playerTransform.position), new Vector3(x,0,z)) < this.chunkPreloadRadius &&
-				    ! this.chunkObjects.ContainsKey(new ChunkTuple(x,z)))
+				if (Vector3.Distance(this.GetChunkPosition(playerPosition), new Vector3(x,0,z)) < this.chunkPreloadRadius &&
+				    ! this.chunkObjects.ContainsKey(x,0,z))
 				{
 					this.GenerateChunk(x,z);
 				}
@@ -258,35 +268,40 @@ public class CubicTerrain : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Generates the chunk generation job for x|z
+	/// Generates the chunk generation job for x|z.
+	/// 
+	/// One Chunk generation job generates a all chunks on y-axis for x|z.
 	/// </summary>
 	/// <param name="x">The x coordinate.</param>
 	/// <param name="z">The z coordinate.</param>
 	private void GenerateChunk(int x, int z)
 	{
-		if (this.generationJobs.ContainsKey (new ChunkTuple (x, z)) || this.chunkData.ContainsKey(new ChunkTuple (x, z)))
-			return;
-
-		// Create gameobject
-		Vector3 chunkPosition = this.transform.position + new Vector3
-		(
-			x * this.chunkWidth,
-			0,
-			z * this.chunkDepth
-		);
-		
-		GameObject chunkObject = new GameObject ("Chunk (" + x + "|" + z + ")");
-		chunkObject.transform.position = chunkPosition;
-		chunkObject.transform.parent = this.transform;
-		chunkObject.layer = this.gameObject.layer;
-
-		CubicTerrainChunk terrainChunk = chunkObject.AddComponent<CubicTerrainChunk> ();
-		terrainChunk.chunkPosition = new Vector3 (x, 0, z);
-
-		lock (this.generationLockObject)
+		for (int y = 0; y < this.chunksOnYAxis; y++)
 		{
-			this.chunkObjects.Add (new ChunkTuple (x, z), chunkObject);
-			this.generationJobs.Add (new ChunkTuple(x,z), new ChunkGenerationJob(new CubicTerrainData(this.chunkWidth, this.chunkHeight, this.chunkDepth), chunkPosition));
+			if (this.generationJobs.ContainsKey (x,y,z) || this.chunkData.ContainsKey(x,y,z))
+				return;
+
+			// Create gameobject
+			Vector3 chunkPosition = this.transform.position + new Vector3
+			(
+				x * this.chunkWidth,
+				y * this.chunkHeight,
+				z * this.chunkDepth
+			);
+			
+			GameObject chunkObject = new GameObject ("Chunk (" + x + "|" + y + "|" + z + ")");
+			chunkObject.transform.position = chunkPosition;
+			chunkObject.transform.parent = this.transform;
+			chunkObject.layer = this.gameObject.layer;
+
+			CubicTerrainChunk terrainChunk = chunkObject.AddComponent<CubicTerrainChunk> ();
+			terrainChunk.chunkPosition = new Vector3 (x, y, z);
+
+			lock (this.generationLockObject)
+			{
+				this.chunkObjects.Add (x,y,z, chunkObject);
+				this.generationJobs.Add (x,y,z, new ChunkGenerationJob(new CubicTerrainData(this.chunkWidth, this.chunkHeight, this.chunkDepth), chunkPosition));
+			}
 		}
 	}
 
@@ -299,26 +314,26 @@ public class CubicTerrain : MonoBehaviour
 		{
 			lock(this.generationLockObject)
 			{
-				foreach (KeyValuePair<ChunkTuple, ChunkGenerationJob> job in this.generationJobs)
+				foreach (KeyValuePair<ListIndex<int>, ChunkGenerationJob> job in this.generationJobs.listSource)
 				{
 					if (! job.Value.done)
 					{
-						// 
-						if (this.terrainFile != null && this.terrainFile.HasChunk(job.Key.x, job.Key.z))
+						// If this chunk was already generated load it from the file.
+						if (this.terrainFile != null && this.terrainFile.HasChunk(job.Key.x, job.Key.y, job.Key.z))
 						{
-							job.Value.terrainChunkData = this.terrainFile.GetChunkData(job.Key.x, job.Key.z, this.chunkWidth, this.chunkHeight, this.chunkDepth);
+							job.Value.terrainChunkData = this.terrainFile.GetChunkData(job.Key.x, job.Key.y, job.Key.z, this.chunkWidth, this.chunkHeight, this.chunkDepth);
 						}
 						else
 						{
 							this.terrainGenerator.GenerateChunk(job.Value.terrainChunkData, job.Value.worldspace);
 						}
-						this.chunkData.Add (job.Key, job.Value.terrainChunkData);
+						this.chunkData.Add (job.Key.x, job.Key.y, job.Key.z, job.Value.terrainChunkData);
 						job.Value.done = true;
 					}
 				}
 			}
 
-			Thread.Sleep (100);
+			Thread.Sleep (10);
 		}
 	}
 
@@ -330,13 +345,13 @@ public class CubicTerrain : MonoBehaviour
 	{
 		lock(this.generationLockObject)
 		{
-			List<ChunkTuple> jobsToDelete = new List<ChunkTuple>();
-			foreach (KeyValuePair<ChunkTuple, ChunkGenerationJob> job in this.generationJobs)
+			List<ListIndex<int>> jobsToDelete = new List<ListIndex<int>>();
+			foreach (KeyValuePair<ListIndex<int>, ChunkGenerationJob> job in this.generationJobs.listSource)
 			{
 				if (job.Value.done)
 				{
 					// Check if chunk object is in the chunk objects list
-					if (this.chunkObjects.ContainsKey(job.Key))
+					if (this.chunkObjects.ContainsKey(job.Key.x, job.Key.y, job.Key.z))
 					{
 						// Set chunk data
 						CubicTerrainChunk chunk = this.chunkObjects[job.Key].GetComponent<CubicTerrainChunk>();
@@ -350,7 +365,7 @@ public class CubicTerrain : MonoBehaviour
 			}
 
 			// Delete jobs marked for removal
-			foreach(ChunkTuple t in jobsToDelete)
+			foreach(ListIndex<int> t in jobsToDelete)
 			{
 				this.generationJobs.Remove (t);
 			}
@@ -362,21 +377,24 @@ public class CubicTerrain : MonoBehaviour
 	/// </summary>
 	private void CollectGarbage()
 	{
-		List<ChunkTuple> chunksToDelete = new List<ChunkTuple>();
+		List<ListIndex<int>> chunksToDelete = new List<ListIndex<int>>();
 		
+		Vector3 playerPosition = this.playerTransform.position;
+		playerPosition.y = 0;
+
 		// Get chunks to delete
 		Vector3 chunkVector = Vector3.zero;
-		foreach (KeyValuePair<ChunkTuple, GameObject> chunk in this.chunkObjects)
+		foreach (KeyValuePair<ListIndex<int>, GameObject> chunk in this.chunkObjects.listSource)
 		{
 			chunkVector = new Vector3(chunk.Key.x, 0, chunk.Key.z);
-			if (Vector3.Distance(chunkVector, this.GetChunkPosition(this.playerTransform.position)) > this.chunkPreloadRadius)
+			if (Vector3.Distance(chunkVector, this.GetChunkPosition(playerPosition)) > this.chunkPreloadRadius)
 			{
 				chunksToDelete.Add (chunk.Key);
 			}
 		}
 		
 		// Delete chunks
-		foreach (ChunkTuple t in chunksToDelete)
+		foreach (ListIndex<int> t in chunksToDelete)
 		{
 			Destroy (this.chunkObjects[t]);
 			this.chunkObjects.Remove (t);
@@ -390,9 +408,9 @@ public class CubicTerrain : MonoBehaviour
 	/// <returns>The chunk object.</returns>
 	/// <param name="chunkX">Chunk x.</param>
 	/// <param name="chunkZ">Chunk z.</param>
-	public GameObject GetChunkObject(int chunkX, int chunkZ)
+	public GameObject GetChunkObject(int chunkX, int chunkY, int chunkZ)
 	{
-		return this.chunkObjects [new ChunkTuple (chunkX, chunkZ)];
+		return this.chunkObjects [new ListIndex<int>(chunkX, chunkY, chunkZ)];
 	}
 	
 	/// <summary>
@@ -406,15 +424,18 @@ public class CubicTerrain : MonoBehaviour
 	{
 		// Calculate chunk position for calculating relative position
 		Vector3 chunk = this.GetChunkPosition(new Vector3(x,y,z));
-		
+
 		// Calculate relative position
 		x -= (int)(chunk.x * this.chunkWidth);
+		y -= (int)(chunk.y * this.chunkHeight);
 		z -= (int)(chunk.z * this.chunkDepth);
 		
-		if (!this.chunkData.ContainsKey (new ChunkTuple ((int)chunk.x, (int)chunk.z)))
+		if (!this.chunkData.ContainsKey ((int)chunk.x, (int)chunk.y, (int)chunk.z))
 			return null;
+		else
+			Debug.LogError ("Tried to get block from non existing chunk: " + chunk + " at position " + x + "|" + y + "|" + z);
 
-		return this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].GetVoxel(x,y,z);
+		return this.chunkData[new ListIndex<int>((int)chunk.x, (int)chunk.y, (int)chunk.z)].GetVoxel(x,y,z);
 	}
 	
 	/// <summary>
@@ -430,10 +451,13 @@ public class CubicTerrain : MonoBehaviour
 		
 		// Calculate relative position
 		x -= (int)(chunk.x * this.chunkWidth);
+		y -= (int)(chunk.y * this.chunkHeight);
 		z -= (int)(chunk.z * this.chunkDepth);
 		
-		if (this.chunkData.ContainsKey (new ChunkTuple ((int)chunk.x, (int)chunk.z)))
-			this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].SetVoxel(x,y,z,blockId);
+		if (this.chunkData.ContainsKey ((int)chunk.x, (int)chunk.y, (int)chunk.z))
+			this.chunkData [new ListIndex<int> ((int)chunk.x, (int)chunk.y, (int)chunk.z)].SetVoxel (x, y, z, blockId);
+		else
+			Debug.LogError ("Tried to set block to non existing chunk: " + chunk + " at position " + x + "|" + y + "|" + z);
 	}
 
 	/// <summary>
@@ -451,12 +475,13 @@ public class CubicTerrain : MonoBehaviour
 		
 		// Calculate relative position
 		x -= (int)(chunk.x * this.chunkWidth);
+		y -= (int)(chunk.y * this.chunkHeight);
 		z -= (int)(chunk.z * this.chunkDepth);
 
-		if (! this.chunkData.ContainsKey (new ChunkTuple ((int)chunk.x, (int)chunk.z)))
+		if (! this.chunkData.ContainsKey ((int)chunk.x, (int)chunk.y, (int)chunk.z))
 			return false;
 
-		return this.chunkData[new ChunkTuple((int)chunk.x, (int)chunk.z)].HasVoxel(x,y,z);
+		return this.chunkData[new ListIndex<int>((int)chunk.x, (int)chunk.y, (int)chunk.z)].HasVoxel(x,y,z);
 	}
 
 	/// <summary>
@@ -475,6 +500,7 @@ public class CubicTerrain : MonoBehaviour
 	/// </summary>
 	public void OnDestroy()
 	{
+		// TODO
 		if (this.terrainFile != null)
 			this.terrainFile.Close ();
 	}
@@ -496,53 +522,4 @@ public class CubicTerrain : MonoBehaviour
 		);
 	}
 
-}
-
-
-// Chunk tuple implementation
-// Used to identify chunks in a Dictionary
-public class ChunkTuple : System.Object
-{
-	public int x,z;
-	
-	public ChunkTuple(int x, int z)
-	{
-		this.x = x;
-		this.z = z;
-	}
-	
-	public override bool Equals(object other)
-	{
-		ChunkTuple otherTuple = (ChunkTuple) other;
-		
-		if (otherTuple != null)
-		{
-			return (otherTuple.x == this.x && otherTuple.z == this.z);
-		}
-		
-		return false;
-	}
-	
-	public static bool operator ==(ChunkTuple a, ChunkTuple b)
-	{
-		if (((object)a == null) || ((object)b == null))
-			return false;
-		
-		return a.Equals(b);
-	}
-	
-	public static bool operator !=(ChunkTuple a, ChunkTuple b)
-	{
-		return !(a == b);
-	}
-	
-	public override string ToString()
-	{
-		return "ChunkTuple: " + this.x + "|" + this.z;
-	}
-	
-	public override int GetHashCode()
-	{
-		return ((short)this.z >> 16) | this.x;
-	}
 }

@@ -84,6 +84,16 @@ public class BlockAdder : MonoBehaviour
 								chunkPos.x+= 1;
 								x=0;
 							}
+							if (y < 0)
+							{
+								chunkPos.y-= 1;
+								y=chunk.master.chunkDepth-1;
+							}
+							if (z >= chunk.master.chunkHeight)
+							{
+								chunkPos.y+=1;
+								y=0;
+							}
 							if (z < 0)
 							{
 								chunkPos.z-= 1;
@@ -96,7 +106,7 @@ public class BlockAdder : MonoBehaviour
 							}
 
 							// Finally place the object
-							GameObject chunkObject = chunk.master.GetChunkObject((int) chunkPos.x, (int) chunkPos.z);
+							GameObject chunkObject = chunk.master.GetChunkObject((int) chunkPos.x, (int)chunkPos.y, (int) chunkPos.z);
 							chunkObject.GetComponent<CubicTerrainChunk>().chunkData.SetVoxel(x,y,z,(short)this.blockId);
 						}
 					}

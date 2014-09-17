@@ -15,16 +15,14 @@ Current Features
 * Chunk serialization and deserialization (for saving chunk data)
 * A*-Pathfinding
 
-Currently in Progress
-===========
-* Custom Physics System (PlayerController and Raycasts, so very simple.)
-* End-user documentation
-
 Planned Features
 ===========
-* Simple Lighting System (Alternative to unity's heavy lighting / shading)
-* Fluid simulation
-* Unity networking integration
+* [HIGH PRIORITY] Unity networking integration
+* [MIDDLE PRIORITY] Code cleanups / Performance optimizations
+* [MIDDLE PRIORITY] Simple Lighting System (Alternative to unity's heavy lighting / shading)
+* [MIDDLE PRIORITY] Fluid simulation
+* [LOW PRIORITY] Custom Physics System (PlayerController and Raycasts, so very simple.)
+* [LOW PRIORITY] End-user documentation
 
 Documentation
 ===========

@@ -120,7 +120,7 @@ public class PathfindingExample : MonoBehaviour
 							}
 							
 							// Finally place the object
-							GameObject chunkObject = chunk.master.GetChunkObject((int) chunkPos.x, (int) chunkPos.z);
+							GameObject chunkObject = chunk.master.GetChunkObject((int) chunkPos.x, (int)chunkPos.y, (int) chunkPos.z);
 							chunk = chunkObject.GetComponent<CubicTerrainChunk>();
 
 							// Get absolute position

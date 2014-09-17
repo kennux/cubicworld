@@ -4,6 +4,8 @@ using System.Collections;
 /// <summary>
 /// Cubic path information holder.
 /// Will get returned from the CubicPathfinder class (calculated in another thread).
+/// 
+/// Still work in progress!
 /// </summary>
 public class CubicPath
 {

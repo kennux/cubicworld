@@ -5,6 +5,7 @@ public class TestGenerator : ATerrainGenerator
 {
 	public float frequency2D = 0.05f;
 	public float frequency3D = 0.05f;
+	public float frequency = 0.05f;
 	
 	// Block Ids
 	private const int grassId = 1;
@@ -18,7 +19,7 @@ public class TestGenerator : ATerrainGenerator
 	
 	protected override void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace)
 	{
-		Simplex.remixPermutation (System.DateTime.Now.Millisecond * System.DateTime.Now.Second);
+		/*Simplex.remixPermutation (System.DateTime.Now.Millisecond * System.DateTime.Now.Second);
 		for (int x = 0; x < terrainDataObject.width; x++)
 		{
 			for (int z = 0; z < terrainDataObject.depth; z++)
@@ -28,10 +29,11 @@ public class TestGenerator : ATerrainGenerator
 				float absZ = (float) z + worldspace.z;
 				
 				float perlin = Mathf.PerlinNoise(absX * frequency2D, absZ * frequency2D);
-				int toY = (int)(perlin * ((float)terrainDataObject.height-1));
+				float absoluteWorldHeight = CubicTerrain.GetInstance().chunksOnYAxis * CubicTerrain.GetInstance().chunkHeight;
+				int toY = Mathf.Min((int)(perlin * absoluteWorldHeight), terrainDataObject.height);
 
 				bool tree = false; // this.rand.NextDouble() > 0.99;
-				for (int y = 0; y < toY; y++)
+				for (int y = worldspace.y; y < (int)worldspace.y + toY; y++)
 				{
 					if (y < toY-4)
 					{
@@ -89,6 +91,38 @@ public class TestGenerator : ATerrainGenerator
 
 				// Set bedrock
 				terrainDataObject.SetVoxel(x,0,z,bedrockId);
+			}
+		}*/
+		
+		for (int x = 0; x < terrainDataObject.width; x++)
+		{
+			for (int y = 0; y < terrainDataObject.height; y++)
+			{
+				for (int z = 0; z < terrainDataObject.depth; z++)
+				{
+					// Get absolute positions for noise generation
+					float absX = (float) x + worldspace.x;
+					float absZ = (float) z + worldspace.z;
+					float absY = (float) y + worldspace.y;
+					
+					//float perlin = Mathf.PerlinNoise(absX * frequency, absZ * frequency);
+					//int toY = (int)(perlin * ((float)terrainDataObject.height-1));
+					float noise = Simplex.Generate(absX * this.frequency, absY * this.frequency, absZ * this.frequency);
+					
+					/*for (int y = 0; y < toY-3; y++)
+					{
+						terrainDataObject.SetVoxel(x,y,z,stoneId);
+					}
+
+					for (int y = toY-3; y < toY-1; y++)
+					{
+						terrainDataObject.SetVoxel(x,y,z,dirtId);
+					}
+					terrainDataObject.SetVoxel(x,toY-1,z,grassId);*/
+					
+					if (noise < 0.5f && noise > 0.25f)
+						terrainDataObject.SetVoxel(x,y,z,2);
+				}
 			}
 		}
 	}

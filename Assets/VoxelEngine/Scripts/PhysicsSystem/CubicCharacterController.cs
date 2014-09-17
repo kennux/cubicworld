@@ -83,7 +83,6 @@ public class CubicCharacterController : MonoBehaviour
 
 		if (newPositionValid)
 		{
-			Debug.Log ("New position: " + realNewPosition);
 			this.transform.position = realNewPosition;
 			this.velocity -= this.velocity / 2;
 		}

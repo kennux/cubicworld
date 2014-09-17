@@ -28,7 +28,7 @@ public class TestBootstrap : ABlockBootstrap
 		int treeId = Blocks.AddTexture (this.treeTexture);
 		Blocks.BuildTextureAtlas ();
 
-		Blocks.RegisterBlock (1).SetTextures(grassTopId,dirtId,grassSideId,grassSideId,grassSideId,grassSideId, false);
+		Blocks.RegisterBlock (1).SetTextures (grassTopId,dirtId,grassSideId,grassSideId,grassSideId,grassSideId, false);
 		Blocks.RegisterBlock (2).SetTextures (dirtId, dirtId, dirtId, dirtId, dirtId, dirtId, false);
 		Blocks.RegisterBlock (3).SetTextures (stoneId, stoneId, stoneId, stoneId, stoneId, stoneId, false);
 		Blocks.RegisterBlock (4).SetTextures (glassId, glassId, glassId, glassId, glassId, glassId, true);

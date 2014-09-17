@@ -141,7 +141,7 @@ public class CubicPhysics
 					Vector3 blockCenterPosition = blockPos + new Vector3(0.5f, 0.5f, 0.5f);
 
 					// Get shortest distance face.
-					float shortestDistance = 1.01f;
+					float shortestDistance = stepWidth+10;
 					int shortestFace = -1;
 
 					for (int i = 0; i < faceNormals.Length; i++)

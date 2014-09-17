@@ -22,7 +22,7 @@ public class CubicTerrainFile
 	/// <summary>
 	/// The chunk lookup table.
 	/// </summary>
-	private Dictionary<ChunkTuple, long> chunkLookupTable;
+	private List3D<long> chunkLookupTable;
 
 	private object chunkDataLockObject = new object ();
 	private object chunkLookupLockObject = new object ();
@@ -44,7 +44,7 @@ public class CubicTerrainFile
 		if (!File.Exists (this.chunkLookupTableFile))
 			File.Create (this.chunkLookupTableFile).Close ();
 
-		this.chunkLookupTable = new Dictionary<ChunkTuple, long> ();
+		this.chunkLookupTable = new List3D<long> ();
 		this.LoadLookupTable ();
 	}
 
@@ -58,14 +58,15 @@ public class CubicTerrainFile
 			// Read all lookup entries
 			byte[] lookupEntries = File.ReadAllBytes (this.chunkLookupTableFile);
 
-			// 16 Bytes (int - x, int - y, long data position)
-			for (int i = 0; i < lookupEntries.Length; i += 16)
+			// 20 Bytes (int - x, int - y, long data position)
+			for (int i = 0; i < lookupEntries.Length; i += 20)
 			{
 				int x = BitConverter.ToInt32(lookupEntries, i);
-				int z = BitConverter.ToInt32(lookupEntries, i+4);
-				long position = BitConverter.ToInt64(lookupEntries, i+8);
+				int y = BitConverter.ToInt32(lookupEntries, i+4);
+				int z = BitConverter.ToInt32(lookupEntries, i+8);
+				long position = BitConverter.ToInt64(lookupEntries, i+12);
 
-				this.chunkLookupTable.Add(new ChunkTuple(x,z), position);
+				this.chunkLookupTable.Add(x,y,z, position);
 			}
 		}
 	}
@@ -76,20 +77,22 @@ public class CubicTerrainFile
 	/// <param name="x">The x coordinate.</param>
 	/// <param name="z">The z coordinate.</param>
 	/// <param name="position">Position.</param>
-	private void WriteLookupTable(int x, int z, long position)
+	private void WriteLookupTable(int x, int y, int z, long position)
 	{
 		lock (this.chunkLookupLockObject)
 		{
 			// Write bytes
 			byte[] bytesX = BitConverter.GetBytes(x);
+			byte[] bytesY = BitConverter.GetBytes(y);
 			byte[] bytesZ = BitConverter.GetBytes(z);
 			byte[] bytesPosition = BitConverter.GetBytes(position);
 
 			// Concatenate all byte arrays
-			byte[] bytes = new byte[bytesX.Length+bytesZ.Length+bytesPosition.Length];
+			byte[] bytes = new byte[bytesX.Length+bytesY.Length+bytesZ.Length+bytesPosition.Length];
 			Array.Copy (bytesX, 0, bytes, 0, 4);
-			Array.Copy (bytesZ, 0, bytes, 4, 4);
-			Array.Copy (bytesPosition, 0, bytes, 8, 8);
+			Array.Copy (bytesY, 0, bytes, 4, 4);
+			Array.Copy (bytesZ, 0, bytes, 8, 4);
+			Array.Copy (bytesPosition, 0, bytes, 12, 8);
 
 			using (FileStream stream = new FileStream(this.chunkLookupTableFile, FileMode.Append))
 			{
@@ -106,9 +109,9 @@ public class CubicTerrainFile
 	/// <returns><c>true</c> if this instance has chunk the specified x z; otherwise, <c>false</c>.</returns>
 	/// <param name="x">The x coordinate.</param>
 	/// <param name="z">The z coordinate.</param>
-	public bool HasChunk(int x, int z)
+	public bool HasChunk(int x, int y, int z)
 	{
-		return this.chunkLookupTable.ContainsKey(new ChunkTuple(x,z));
+		return this.chunkLookupTable.ContainsKey(x,y,z);
 	}
 
 	/// <summary>
@@ -120,13 +123,13 @@ public class CubicTerrainFile
 	/// <param name="width">Width.</param>
 	/// <param name="height">Height.</param>
 	/// <param name="depth">Depth.</param>
-	public CubicTerrainData GetChunkData(int x, int z, int width, int height, int depth)
+	public CubicTerrainData GetChunkData(int x, int y, int z, int width, int height, int depth)
 	{
 		BufferedStream chunkDataStream = new BufferedStream (File.Open (this.chunkDataFile, FileMode.Open));
 		CubicTerrainData terrainData = new CubicTerrainData (width, height, depth);
 
 		// Get chunk starting position
-		chunkDataStream.Position = this.chunkLookupTable [new ChunkTuple (x, z)];
+		chunkDataStream.Position = this.chunkLookupTable [new ListIndex<int>(x,y,z)];
 
 		terrainData.DeserializeChunk (chunkDataStream);
 		chunkDataStream.Close ();
@@ -140,25 +143,25 @@ public class CubicTerrainFile
 	/// <param name="x">The x coordinate.</param>
 	/// <param name="z">The z coordinate.</param>
 	/// <param name="terrainData">Terrain data.</param>
-	public void SetChunkData(int x, int z, CubicTerrainData terrainData)
+	public void SetChunkData(int x, int y, int z, CubicTerrainData terrainData)
 	{
 		lock (this.chunkDataLockObject)
 		{
 			BufferedStream chunkDataStream = new BufferedStream (File.Open (this.chunkDataFile, FileMode.Open));
-			ChunkTuple tuple = new ChunkTuple (x, z);
+			ListIndex<int> index = new ListIndex<int>(x,y,z);
 
 			long position = chunkDataStream.Length;
-			if (this.chunkLookupTable.ContainsKey(tuple))
+			if (this.chunkLookupTable.ContainsKey(x,y,z))
 			{
 				// Key already available
-				position = this.chunkLookupTable[tuple];
+				position = this.chunkLookupTable[index];
 			}
 			else
 			{
 				// Key not available
 				// Update lookup table
-				this.chunkLookupTable.Add (tuple, chunkDataStream.Length);
-				this.WriteLookupTable (x,z, chunkDataStream.Length);
+				this.chunkLookupTable.Add (x,y,z, chunkDataStream.Length);
+				this.WriteLookupTable (x,y,z, chunkDataStream.Length);
 			}
 
 			// Write chunk data

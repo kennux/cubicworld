@@ -233,7 +233,7 @@ public class CubicTerrainChunk : MonoBehaviour
 		}
 		
 		// Lag protection
-        if (this.master != null && (!this.master.smoothChunkLoading || lastUpdateFrame < Time.frameCount - 5))
+        if (this.master != null && (!this.master.smoothChunkLoading || lastUpdateFrame < Time.frameCount - this.master.smoothingFrameDistancePerLoad))
 		{
 			lock (this.meshDataLockObject)
 			{
@@ -421,7 +421,7 @@ public class CubicTerrainChunk : MonoBehaviour
 
 		// Write mesh data update
 		if (this.master.terrainFile != null)
-			this.master.terrainFile.SetChunkData ((int)this.chunkPosition.x, (int)this.chunkPosition.z, this.chunkData);
+			this.master.terrainFile.SetChunkData ((int)this.chunkPosition.x, (int)this.chunkPosition.y, (int)this.chunkPosition.z, this.chunkData);
 
 		// Set mesh data
 		lock (this.meshDataLockObject)
@@ -608,7 +608,7 @@ public class CubicTerrainChunk : MonoBehaviour
 	#endregion
 
 	/// <summary>
-	/// Transforms the given facing of the block at the given position.
+	/// Transforms the given facing of the block at the given position by the block's rotation.
 	/// </summary>
 	/// <returns>The facing.</returns>
 	public BlockFace TransformFacing(BlockFace facing, int x, int y, int z)
@@ -641,7 +641,7 @@ public class CubicTerrainChunk : MonoBehaviour
 		return new Vector3
 		(
 			this.chunkPosition.x * this.master.chunkWidth + relativePosition.x,
-			relativePosition.y,
+			this.chunkPosition.y * this.master.chunkHeight + relativePosition.y,
 			this.chunkPosition.z * this.master.chunkDepth + relativePosition.z
 		);
 	}
