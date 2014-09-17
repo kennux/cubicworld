@@ -128,7 +128,7 @@ public class CubicTerrainData
 	{
 		lock (this.voxelDataLockObject)
 		{
-			if (y >= this.height || x >= this.width || z >= this.depth)
+			if (y >= this.height || x >= this.width || z >= this.depth || y < 0 || x < 0 || z < 0)
 			{
 				Debug.LogError ("Tried to set voxel on chunk out of bounds at " + x + "|" + y + "|" + z);
 				return;

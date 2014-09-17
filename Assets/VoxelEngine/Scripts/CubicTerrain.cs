@@ -110,26 +110,11 @@ public class CubicTerrain : MonoBehaviour
 	/// <param name="worldspace">Worldspace.</param>
 	public Vector3 GetChunkPosition(Vector3 worldspace)
 	{
-		int x = (int)(worldspace.x + this.transformPosition.x);
-		int z = (int)(worldspace.x + this.transformPosition.x);
-		float xF = ((worldspace.x + this.transformPosition.x) / this.chunkWidth);
-		float zF = ((worldspace.z + this.transformPosition.z) / this.chunkDepth);
-		
-		if (x < 0)
-			x = Mathf.CeilToInt(xF);
-		else
-			x = Mathf.FloorToInt(xF);
-		
-		if (z < 0)
-			z = Mathf.CeilToInt(zF);
-		else
-			z = Mathf.FloorToInt(zF);
-		
 		return new Vector3
 		(
-			x,
-			Mathf.FloorToInt ((worldspace.y + this.transformPosition.y) / this.chunkHeight),
-			z
+			Mathf.FloorToInt(((worldspace.x + this.transformPosition.x) / this.chunkWidth)),
+			Mathf.FloorToInt(((worldspace.y + this.transformPosition.y) / this.chunkHeight)),
+			Mathf.FloorToInt(((worldspace.z + this.transformPosition.z) / this.chunkDepth))
 		);
 	}
 
@@ -140,33 +125,11 @@ public class CubicTerrain : MonoBehaviour
 	/// <param name="worldspace">Worldspace.</param>
 	public Vector3 GetBlockPosition(Vector3 worldspace)
 	{
-		int x = (int)(worldspace.x + this.transformPosition.x);
-		int y = (int)(worldspace.y + this.transformPosition.y);
-		int z = (int)(worldspace.z + this.transformPosition.z);
-		float xF = (worldspace.x + this.transformPosition.x);
-		float yF = (worldspace.y + this.transformPosition.y);
-		float zF = (worldspace.z + this.transformPosition.z);
-
-		if (x < 0)
-			x = Mathf.CeilToInt(xF);
-		else
-			x = Mathf.FloorToInt(xF);
-		
-		if (y < 0)
-			y = Mathf.CeilToInt(yF);
-		else
-			y = Mathf.FloorToInt(yF);
-
-		if (z < 0)
-			z = Mathf.CeilToInt(zF);
-		else
-			z = Mathf.FloorToInt(zF);
-		
 		return new Vector3
 		(
-			x,
-			y,
-			z
+			Mathf.FloorToInt((worldspace.x + this.transformPosition.x)),
+			Mathf.FloorToInt((worldspace.y + this.transformPosition.y)),
+			Mathf.FloorToInt((worldspace.z + this.transformPosition.z))
 		);
 	}
 
@@ -424,18 +387,23 @@ public class CubicTerrain : MonoBehaviour
 	{
 		// Calculate chunk position for calculating relative position
 		Vector3 chunk = this.GetChunkPosition(new Vector3(x,y,z));
+		
+		if (! this.chunkData.ContainsKey ((int)chunk.x, (int)chunk.y, (int)chunk.z))
+			return null;
+		
+		CubicTerrainData cData = this.chunkData [new ListIndex<int> ((int)chunk.x, (int)chunk.y, (int)chunk.z)];
 
 		// Calculate relative position
 		x -= (int)(chunk.x * this.chunkWidth);
 		y -= (int)(chunk.y * this.chunkHeight);
 		z -= (int)(chunk.z * this.chunkDepth);
 		
-		if (!this.chunkData.ContainsKey ((int)chunk.x, (int)chunk.y, (int)chunk.z))
-			return null;
-		else
-			Debug.LogError ("Tried to get block from non existing chunk: " + chunk + " at position " + x + "|" + y + "|" + z);
+		if (x < 0)
+			x *= -1;
+		if (z < 0)
+			z *= -1;
 
-		return this.chunkData[new ListIndex<int>((int)chunk.x, (int)chunk.y, (int)chunk.z)].GetVoxel(x,y,z);
+		return cData.GetVoxel(x,y,z);
 	}
 	
 	/// <summary>
@@ -449,13 +417,23 @@ public class CubicTerrain : MonoBehaviour
 		// Calculate chunk position for calculating relative position
 		Vector3 chunk = this.GetChunkPosition(new Vector3(x,y,z));
 		
+		if (! this.chunkData.ContainsKey ((int)chunk.x, (int)chunk.y, (int)chunk.z))
+			return;
+		
+		CubicTerrainData cData = this.chunkData [new ListIndex<int> ((int)chunk.x, (int)chunk.y, (int)chunk.z)];
+		
 		// Calculate relative position
-		x -= (int)(chunk.x * this.chunkWidth);
-		y -= (int)(chunk.y * this.chunkHeight);
-		z -= (int)(chunk.z * this.chunkDepth);
+		x = x - (int)(chunk.x * this.chunkWidth);
+		y = y - (int)(chunk.y * this.chunkHeight);
+		z = z - (int)(chunk.z * this.chunkDepth);
+		
+		if (x < 0)
+			x *= -1;
+		if (z < 0)
+			z *= -1;
 		
 		if (this.chunkData.ContainsKey ((int)chunk.x, (int)chunk.y, (int)chunk.z))
-			this.chunkData [new ListIndex<int> ((int)chunk.x, (int)chunk.y, (int)chunk.z)].SetVoxel (x, y, z, blockId);
+			cData.SetVoxel (x, y, z, blockId);
 		else
 			Debug.LogError ("Tried to set block to non existing chunk: " + chunk + " at position " + x + "|" + y + "|" + z);
 	}
@@ -477,11 +455,18 @@ public class CubicTerrain : MonoBehaviour
 		x -= (int)(chunk.x * this.chunkWidth);
 		y -= (int)(chunk.y * this.chunkHeight);
 		z -= (int)(chunk.z * this.chunkDepth);
-
+		
 		if (! this.chunkData.ContainsKey ((int)chunk.x, (int)chunk.y, (int)chunk.z))
 			return false;
+		
+		CubicTerrainData cData = this.chunkData [new ListIndex<int> ((int)chunk.x, (int)chunk.y, (int)chunk.z)];
+		
+		if (x < 0)
+			x *= -1;
+		if (z < 0)
+			z *= -1;
 
-		return this.chunkData[new ListIndex<int>((int)chunk.x, (int)chunk.y, (int)chunk.z)].HasVoxel(x,y,z);
+		return cData.HasVoxel(x,y,z);
 	}
 
 	/// <summary>

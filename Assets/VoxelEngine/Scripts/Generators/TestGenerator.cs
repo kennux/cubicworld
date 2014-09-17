@@ -120,7 +120,9 @@ public class TestGenerator : ATerrainGenerator
 					}
 					terrainDataObject.SetVoxel(x,toY-1,z,grassId);*/
 					
-					if (noise < 0.5f && noise > 0.25f)
+					/*if (noise < 0.5f && noise > 0.25f)
+						terrainDataObject.SetVoxel(x,y,z,2);*/
+					if (absY < 4)
 						terrainDataObject.SetVoxel(x,y,z,2);
 				}
 			}
