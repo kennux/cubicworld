@@ -10,7 +10,7 @@ using System.Linq;
 public struct BlockHitInfo
 {
 	/// <summary>
-	/// The block that was hit.
+	/// The block that was hit (it's position in blockspace).
 	/// </summary>
 	public Vector3 hitBlock;
 	
@@ -21,7 +21,10 @@ public struct BlockHitInfo
 }
 
 /// <summary>
-/// Cubic terrain chunk.
+/// Cubic terrain chunk implementation.
+/// Handles chunk mesh data generation, rendering, local voxel setting/getting and chunk updates.
+/// 
+/// Local voxel setting/getting means getting or setting blocks on the chunk in local chunkspace coordinates.
 /// </summary>
 public class CubicTerrainChunk : MonoBehaviour
 {
@@ -203,24 +206,32 @@ public class CubicTerrainChunk : MonoBehaviour
 	}
 
 	/// <summary>
-	/// The renderer.
+	/// The meshes used for rendering and collision detection (if you are using unity's physics system)
 	/// </summary>
 	private Mesh[] meshes;
 
+    /// <summary>
+    /// The chunk's position in chunkspace.
+    /// </summary>
 	public Vector3 chunkPosition;
 
 	/// <summary>
-	/// The new mesh.
-	/// Generated from another thread. asnychronously!
+	/// The new mesh data (vertices, normals, uv's).
+    /// Generated in another thread, the meshes get updated in the Update() function if the chunk was dirty.
 	/// </summary>
 	private MeshData[] newMeshData;
 
 	private object meshDataLockObject = new object();
 
+    /// <summary>
+    /// This thread handles the generation of the meshdata.
+    /// </summary>
 	private Thread meshGenerationThread;
 
 	/// <summary>
 	/// Updates the chunk.
+    /// If the chunk was dirty and the new data is already generated it sets the newMeshData to the meshes used for rendering / collision detection,
+    /// or it starts the new mesh data generation if the chunk was dirty.
 	/// </summary>
 	public void FixedUpdate()
 	{
@@ -430,6 +441,7 @@ public class CubicTerrainChunk : MonoBehaviour
 			int verticesAlreadySelected = 0;
 			int trianglesAlreadySelected = 0;
 			List<MeshData> meshDataList = new List<MeshData>();
+
 			while (verticeCount > 0)
 			{
 				MeshData meshData = new MeshData();
@@ -477,7 +489,7 @@ public class CubicTerrainChunk : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Writes the side data.
+	/// Universal function for writing face vertices, normals and uvs for the block at the given position and the given face.
 	/// </summary>
 	/// <param name="vertices">Vertices.</param>
 	/// <param name="indices">Indices.</param>

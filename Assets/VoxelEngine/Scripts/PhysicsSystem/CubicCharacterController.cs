@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// Character controller implementation for cubicworld's physics system.
+/// </summary>
 public class CubicCharacterController : MonoBehaviour
 {
 	/// <summary>

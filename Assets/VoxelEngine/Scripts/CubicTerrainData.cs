@@ -5,12 +5,13 @@ using System.IO;
 
 /// <summary>
 /// Cubic terrain data class.
-/// 
 /// This class is thread-safe!
 /// </summary>
 public class CubicTerrainData
 {
-	// Voxel data struct
+	/// <summary>
+	/// The struct for the data of a single block.
+	/// </summary>
 	public class VoxelData
 	{
 		public short blockId;
@@ -286,7 +287,9 @@ public class CubicTerrainData
 	}
 }
 
-
+/// <summary>
+/// The block face enums
+/// </summary>
 public enum BlockFace
 {
 	LEFT = 0,

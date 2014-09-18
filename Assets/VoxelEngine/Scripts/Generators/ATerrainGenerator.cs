@@ -20,6 +20,8 @@ public abstract class ATerrainGenerator : MonoBehaviour
 	/// <summary>
 	/// Generates the terrain data.
 	/// Generate your world inside here!
+    /// 
+    /// IMPORTANT: Chunks consist of multiple smaller chunks on the y-axis, so this function will get called for every y-axis chunk with the same x and y coordiantes!
 	/// </summary>
 	/// <param name="terrainDataObject">Terrain data object.</param>
 	protected abstract void GenerateTerrainData(CubicTerrainData terrainDataObject, Vector3 worldspace);

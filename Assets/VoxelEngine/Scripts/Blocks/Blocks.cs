@@ -19,6 +19,9 @@ public class Blocks
 	public static Texture2D textureAtlas;
 	private static Vector2 textureDimension;
 
+    /// <summary>
+    /// Initializes the blocks list.
+    /// </summary>
 	private static void Initialize()
 	{
 		if (blocks == null)

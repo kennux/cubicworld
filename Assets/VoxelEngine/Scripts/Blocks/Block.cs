@@ -22,7 +22,7 @@ public class Block
 	/// <param name="frontTexture">Front texture.</param>
 	/// <param name="backTexture">Back texture.</param>
 	/// <param name="transparentBlock">If set to <c>true</c> transparent block.</param>
-	public void SetTextures(int topTexture, int bottomTexture, int leftTexture, int rightTexture, int frontTexture, int backTexture, bool transparentBlock)
+	public Block SetTextures(int topTexture, int bottomTexture, int leftTexture, int rightTexture, int frontTexture, int backTexture, bool transparentBlock)
 	{
 		// Save texture ids
 		this.topTexture = topTexture;
@@ -40,6 +40,8 @@ public class Block
 		this.frontUv = Blocks.GetUvForTexture (frontTexture);
 		this.backUv = Blocks.GetUvForTexture (backTexture);
 		this.transparentBlock = transparentBlock;
+
+        return this;
 	}
 
 	/// <summary>

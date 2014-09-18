@@ -3,7 +3,7 @@ using System.Collections;
 
 /// <summary>
 /// Cubic raycast hit info structure.
-/// Will get returned by the raycast function.
+/// Will get returned by the raycast function or the GetBlockHitInfo() function from the CubicTerrainChunk class which converts a raycast to this struct.
 /// </summary>
 public struct CubicRaycastHitInfo
 {
@@ -11,8 +11,9 @@ public struct CubicRaycastHitInfo
 	/// The point where the ray hit the block.
 	/// </summary>
 	public Vector3 hitPoint;
+
 	/// <summary>
-	/// The block which the ray hit.
+	/// The block which got hit by the ray (blockspace).
 	/// </summary>
 	public Vector3 blockHit;
 

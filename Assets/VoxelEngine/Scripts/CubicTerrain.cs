@@ -4,7 +4,8 @@ using System.Threading;
 using System.IO;
 
 /// <summary>
-/// Cubic terrain.
+/// Cubic terrain main class.
+/// This class handles chunk generation jobs (not the actual generation), chunk data passing (passes data to the chunk objects), chunk loading / unloading and
 /// 
 /// IMPORTANT: ATerrainGeneration implementation must be added to the same gameobject this script is added to.
 /// </summary>
@@ -46,6 +47,10 @@ public class CubicTerrain : MonoBehaviour
 	/// The terrain material.
 	/// </summary>
 	public Material terrainMaterial;
+
+    /// <summary>
+    /// The material for transparent blocks rendering.
+    /// </summary>
 	public Material transparentTerrainMaterial;
 
 	/// <summary>
@@ -72,8 +77,15 @@ public class CubicTerrain : MonoBehaviour
 	/// </summary>
 	public bool serializeTerrain;
 
+    /// <summary>
+    /// The path where the chunkfiles will get saved to
+    /// </summary>
 	public string chunkFilesPath;
 
+    /// <summary>
+    /// The terrain file instance.
+    /// Gets initialized in the start() function.
+    /// </summary>
 	[HideInInspector]
 	public CubicTerrainFile terrainFile;
 	
@@ -160,7 +172,7 @@ public class CubicTerrain : MonoBehaviour
 	#endregion
 
 	/// <summary>
-	/// Start this instance.
+	/// Initializes the chunk file, chunk generation thread and initializes all needed variables.
 	/// </summary>
 	public void Start()
 	{
@@ -269,7 +281,8 @@ public class CubicTerrain : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Generates all chunks in chunkGenerationQuene
+	/// Generates all chunks in chunkGenerationQuene.
+    /// This function will use the ATerrainGenerator class attached to it's gameobject.
 	/// </summary>
 	private void ChunkGenerationThread()
 	{
@@ -336,7 +349,7 @@ public class CubicTerrain : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Collects the garbage (not needed chunks).
+	/// Collects the garbage (not needed chunks) and deletes it.
 	/// </summary>
 	private void CollectGarbage()
 	{
