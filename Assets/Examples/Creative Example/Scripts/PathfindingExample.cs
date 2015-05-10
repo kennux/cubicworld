@@ -48,7 +48,7 @@ public class PathfindingExample : MonoBehaviour
 			{
 				// Get ready to perform the raycast.
 				RaycastHit hitInfo = new RaycastHit();
-				Ray cameraRay = this.playerCamera.camera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
+				Ray cameraRay = this.playerCamera.GetComponent<Camera>().ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
 				Debug.DrawRay(cameraRay.origin, cameraRay.direction, Color.red, 100.0f);
 				
 				// Perform the raycast
@@ -139,7 +139,7 @@ public class PathfindingExample : MonoBehaviour
 			{
 				// Cubic World Physics way
 				CubicRaycastHitInfo hitInfo = new CubicRaycastHitInfo();
-				if (CubicPhysics.TerrainRaycastUnprecise(this.playerCamera.camera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2)), 5.0f, out hitInfo))
+				if (CubicPhysics.TerrainRaycastUnprecise(this.playerCamera.GetComponent<Camera>().ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2)), 5.0f, out hitInfo))
 				{
 					// Debug.Log ("Hit: " + hitInfo.hitPoint + ", Block: " + hitInfo.blockHit + ", Face: " + hitInfo.faceHit);
 					// Hit block

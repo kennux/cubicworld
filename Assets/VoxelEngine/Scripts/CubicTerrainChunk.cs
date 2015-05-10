@@ -261,19 +261,36 @@ public class CubicTerrainChunk : MonoBehaviour
 						j++;
 					}
 
+
 					for (int i = 0; i < this.newMeshData.Length; i++)
 					{
 						MeshData meshData = this.newMeshData[i];
 						// Generate new mesh object from raw data.
 						Mesh newMesh = new Mesh();
 
-						newMesh.vertices = meshData.vertices; // this.newMeshData.vertices;
-						// newMesh.colors = this.newMeshData.colors;
-						newMesh.uv = meshData.uvs; // this.newMeshData.uvs;
-						// newMesh.triangles = meshData.triangles; // this.newMeshData.triangles;
-						newMesh.subMeshCount = 2;
-						newMesh.SetTriangles(meshData.triangles, 0);
-						newMesh.SetTriangles(meshData.transparentTriangles, 1);
+						newMesh.vertices = meshData.vertices;
+						newMesh.uv = meshData.uvs;
+						int subMeshCount = 0;
+
+						// Make sure there are triangles in the submesh
+						// Since unity 5, submeshes with 0 triangles will cause bad things ....
+						if (meshData.triangles.Length > 0)
+							subMeshCount++;
+
+						if (meshData.transparentTriangles.Length > 0)
+							subMeshCount++;
+
+						newMesh.subMeshCount = subMeshCount;
+
+						// Now lets set the triangles
+						int k = 0;
+						
+						if (meshData.triangles.Length > 0)
+							newMesh.SetTriangles(meshData.triangles, k++);
+						
+						if (meshData.transparentTriangles.Length > 0)
+							newMesh.SetTriangles(meshData.transparentTriangles, k);
+
 						newMesh.RecalculateBounds ();
 						newMesh.RecalculateNormals ();
 						newMesh.Optimize();
@@ -314,9 +331,14 @@ public class CubicTerrainChunk : MonoBehaviour
 							collider = meshObject.GetComponent<MeshCollider>();
 						}
 
+						// Update mesh data
 						filter.sharedMesh = newMesh;
 						if (this.master.useMeshColliders)
-							collider.sharedMesh = newMesh;
+							if (newMesh.triangles.Length > 0)
+								collider.sharedMesh = newMesh;
+							else
+								collider.sharedMesh = null;
+
 						renderer.materials = new Material[] { this.master.terrainMaterial, this.master.transparentTerrainMaterial };
                     }
                     
